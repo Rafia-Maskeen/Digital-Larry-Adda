@@ -1,0 +1,388 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}All Routes - Digital Larry Adda{% endblock %}
+
+{% block content %}
+<style>
+  :root {
+    --gold: #D4AF37;
+    --gold-light: #E8C56A;
+    --gold-dark: #B8941F;
+    --cream: #FFFAF0;
+    --charcoal: #2D2D2D;
+    --shadow-soft: 0 18px 55px rgba(212, 175, 55, 0.2);
+    --shadow-hover: 0 35px 100px rgba(212, 175, 55, 0.38);
+  }
+
+  .routes-table-section {
+    min-height: 100vh;
+    padding: 7rem 1.5rem 5rem;
+    background: linear-gradient(135deg, #fffdf8 0%, var(--cream) 100%);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .routes-table-section::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: 
+      radial-gradient(circle at 12% 88%, rgba(212,175,55,0.17) 0%, transparent 50%),
+      radial-gradient(circle at 88% 12%, rgba(212,175,55,0.12) 0%, transparent 50%);
+    z-index: 0;
+    animation: breathe 15s ease-in-out infinite;
+  }
+
+  @keyframes breathe {
+    0%, 100% { opacity: 0.7; }
+    50% { opacity: 1; }
+  }
+
+  .orb {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, var(--gold-light), var(--gold));
+    filter: blur(1.8px);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 1;
+    animation: floatOrb 12s infinite ease-in-out;
+  }
+
+  @keyframes floatOrb {
+    0%, 100% { transform: translateY(0) scale(1); opacity: 0.3; }
+    50% { transform: translateY(-60px) scale(1.4); opacity: 0.7; }
+  }
+
+  .page-header {
+    text-align: center;
+    margin-bottom: 3.5rem;
+    position: relative;
+    z-index: 2;
+  }
+
+  .page-header h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.4rem, 6vw, 3.2rem);
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: fadeInDown 1s ease-out;
+    margin: 0;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+  }
+
+  .page-header h2::after {
+    content: '';
+    position: absolute;
+    bottom: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 4px;
+    background: linear-gradient(90deg, var(--gold-dark), var(--gold));
+    border-radius: 2px;
+    animation: lineGrow 1.2s ease-out 0.8s both;
+  }
+
+  @keyframes lineGrow {
+    0% { width: 0; }
+    100% { width: 80px; }
+  }
+
+  @keyframes fadeInDown {
+    0% { opacity: 0; transform: translateY(-30px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  .table-container {
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(18px);
+    border-radius: 28px;
+    padding: 2.5rem;
+    box-shadow: var(--shadow-soft);
+    border: 1.8px solid rgba(212,175,55,0.28);
+    position: relative;
+    z-index: 2;
+    overflow: hidden;
+  }
+
+  .table {
+    margin: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+  }
+
+  .table thead th {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--gold-dark);
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    padding: 1.2rem 1rem;
+    border-bottom: 3px solid var(--gold);
+    background: rgba(212,175,55,0.08);
+    position: relative;
+  }
+
+  .table thead th::after {
+    content: '';
+    position: absolute;
+    bottom: -3px;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(90deg, var(--gold), var(--gold-light));
+    opacity: 0.6;
+  }
+
+  .table tbody tr {
+    transition: all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+    background: rgba(255,255,255,0.7);
+    border-bottom: 1px solid rgba(212,175,55,0.15);
+  }
+
+  .table tbody tr:hover {
+    background: rgba(212,175,55,0.12);
+    transform: translateX(8px) scale(1.01);
+    box-shadow: 0 12px 35px rgba(212,175,55,0.18);
+    z-index: 10;
+  }
+
+  .table td {
+    padding: 1.4rem 1rem;
+    font-size: 1rem;
+    color: var(--charcoal);
+    vertical-align: middle;
+    font-weight: 500;
+  }
+
+  .table td strong {
+    color: var(--gold-dark);
+  }
+
+  .seat-count {
+    font-weight: 700;
+    color: #28a745;
+  }
+
+  .seat-count.low {
+    color: #dc3545;
+  }
+
+  .btn-golden {
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.8rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    border-radius: 50px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    box-shadow: 0 8px 25px rgba(212,175,55,0.4);
+    transition: all 0.5s ease;
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+  }
+
+  .btn-golden::before {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 0; height: 0;
+    background: rgba(255,255,255,0.3);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+    z-index: -1;
+  }
+
+  .btn-golden:hover {
+    transform: translateY(-4px) scale(1.06);
+    box-shadow: 0 18px 45px rgba(212,175,55,0.5);
+  }
+
+  .btn-golden:active::before {
+    width: 280px; height: 280px;
+  }
+
+  .empty-row {
+    text-align: center;
+    padding: 3rem 1rem;
+    font-size: 1.2rem;
+    color: #999;
+    animation: fadeInUp 1s ease-out;
+  }
+
+  .empty-row i {
+    font-size: 3.5rem;
+    color: #ddd;
+    margin-bottom: 1rem;
+  }
+
+  @keyframes fadeInUp {
+    0% { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 1200px) {
+    .table-container { padding: 2rem; }
+  }
+
+  @media (max-width: 992px) {
+    .table thead { display: none; }
+    .table tbody td {
+      display: block;
+      text-align: right;
+      padding: 0.8rem 1rem;
+      position: relative;
+    }
+    .table tbody td::before {
+      content: attr(data-label);
+      position: absolute;
+      left: 1rem;
+      font-weight: 600;
+      color: var(--gold-dark);
+      text-transform: uppercase;
+      font-size: 0.85rem;
+    }
+    .table tbody tr {
+      margin-bottom: 1.5rem;
+      display: block;
+      border: 1.5px solid rgba(212,175,55,0.25);
+      border-radius: 18px;
+      padding: 1rem;
+      background: rgba(255,255,255,0.95);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .routes-table-section { padding: 5rem 1rem; }
+    .page-header h2 { font-size: 2rem; }
+    .table-container { padding: 1.5rem; border-radius: 20px; }
+  }
+
+  @media (max-width: 576px) {
+    .page-header h2 { font-size: 1.8rem; }
+    .btn-golden { font-size: 0.9rem; padding: 0.7rem 1.5rem; }
+  }
+</style>
+
+<section class="routes-table-section">
+  <div class="orb" style="width:100px;height:100px;top:10%;left:7%;animation-delay:0s;"></div>
+  <div class="orb" style="width:80px;height:80px;top:72%;right:12%;animation-delay:2.8s;"></div>
+  <div class="orb" style="width:120px;height:120px;bottom:15%;left:5%;animation-delay:5.5s;"></div>
+
+  <div class="container">
+    <div class="page-header">
+      <h2>All Available Routes</h2>
+    </div>
+
+    <div class="table-container">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Route</th>
+            <th>Vehicle</th>
+            <th>Departure</th>
+            <th>Arrival</th>
+            <th>Fare</th>
+            <th>VIP Seats</th>
+            <th>Standard Seats</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for route in routes %}
+          <tr>
+            <td data-label="Route">
+              <strong>{{ route.start_location }}</strong> to <strong>{{ route.end_location }}</strong>
+            </td>
+            <td data-label="Vehicle">
+              {{ route.vehicle.name }}<br>
+              <small class="text-muted">({{ route.vehicle.number_plate }})</small>
+            </td>
+            <td data-label="Departure">
+              {{ route.departure_time|time:"g:i A" }}
+            </td>
+            <td data-label="Arrival">
+              {{ route.arrival_time|time:"g:i A" }}
+            </td>
+            <td data-label="Fare">
+              <strong class="text-success">Rs. {{ route.fare }}</strong>
+            </td>
+            <td data-label="VIP" class="seat-count {% if route.vip_seats < 3 %}low{% endif %}">
+              {{ route.vip_seats }}
+            </td>
+            <td data-label="Standard" class="seat-count {% if route.std_seats < 5 %}low{% endif %}">
+              {{ route.std_seats }}
+            </td>
+            <td data-label="Action">
+              <a href="{% url 'book_route' route.id %}" class="btn btn-golden">
+                Book Now
+              </a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="8" class="empty-row">
+              <i class="fas fa-bus"></i>
+              <p>No routes available at this time. Please check back later!</p>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/js/all.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Golden confetti on load
+    setTimeout(() => {
+      confetti({
+        particleCount: 80,
+        spread: 70,
+        origin: { y: 0.35 },
+        colors: ['#D4AF37', '#E8C56A', '#B8941F', '#FFD700'],
+        scalar: 0.9,
+        ticks: 120
+      });
+    }, 900);
+
+    // Button ripple effect
+    document.querySelectorAll('.btn-golden').forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        const ripple = document.createElement('span');
+        ripple.style.position = 'absolute';
+        ripple.style.borderRadius = '50%';
+        ripple.style.background = 'rgba(255,255,255,0.6)';
+        ripple.style.transform = 'scale(0)';
+        ripple.style.animation = 'ripple 0.6s ease-out';
+        ripple.style.left = `${e.clientX - this.offsetLeft}px`;
+        ripple.style.top = `${e.clientY - this.offsetTop}px`;
+        ripple.style.width = ripple.style.height = '12px';
+        this.appendChild(ripple);
+        setTimeout(() => ripple.remove(), 600);
+      });
+    });
+
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes ripple {
+        to { transform: scale(20); opacity: 0; }
+      }
+    `;
+    document.head.appendChild(style);
+  });
+</script>
+{% endblock %}

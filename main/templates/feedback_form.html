@@ -1,0 +1,243 @@
+{% extends 'base.html' %}
+{% block title %}Feedback - {{ route }}{% endblock %}
+
+{% block content %}
+<style>
+  :root {
+    --gold: #D4AF37;
+    --gold-light: #E8C56A;
+    --cream: #FFFAF0;
+    --charcoal: #2D2D2D;
+    --shadow: 0 8px 32px rgba(212, 175, 55, 0.1);
+    --shadow-hover: 0 16px 48px rgba(212, 175, 55, 0.2);
+  }
+
+  .feedback-form-section {
+    background: linear-gradient(135deg, var(--cream) 0%, #fff8f0 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 100px 20px 60px;
+    position: relative;
+  }
+
+  .feedback-form-section::before {
+    content: '';
+    position: absolute;
+    top: -80px;
+    right: -80px;
+    width: 250px;
+    height: 250px;
+    background: radial-gradient(circle, rgba(212,175,55,0.15), transparent 70%);
+    border-radius: 50%;
+  }
+
+  .feedback-form-wrapper {
+    background: white;
+    border-radius: 28px;
+    padding: 50px;
+    width: 100%;
+    max-width: 520px;
+    box-shadow: var(--shadow);
+    border: 2px solid rgba(212,175,55,0.2);
+    position: relative;
+    z-index: 1;
+    animation: formRise 0.7s ease-out;
+  }
+
+  @keyframes formRise {
+    0% { opacity: 0; transform: translateY(30px) scale(0.95); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .feedback-form-wrapper:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-hover);
+    border-color: var(--gold);
+  }
+
+  .feedback-form-wrapper h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.9rem;
+    text-align: center;
+    color: var(--gold);
+    margin-bottom: 1.8rem;
+    letter-spacing: 1px;
+    position: relative;
+    padding-bottom: 14px;
+  }
+
+  .feedback-form-wrapper h2 i {
+    margin-right: 10px;
+    background: linear-gradient(45deg, var(--gold), var(--gold-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .feedback-form-wrapper h2::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 70px;
+    height: 4px;
+    background: linear-gradient(45deg, var(--gold), var(--gold-light));
+    border-radius: 2px;
+  }
+
+  .form-label {
+    font-weight: 600;
+    color: #B8941F;
+    margin-bottom: 0.7rem;
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+
+  .form-control, textarea, select {
+    width: 100%;
+    padding: 0.9rem 1.2rem;
+    font-size: 1rem;
+    border: 2px solid #eee;
+    border-radius: 16px;
+    background: rgba(255,255,255,0.9);
+    transition: all 0.4s ease;
+    box-shadow: inset 0 3px 8px rgba(0,0,0,0.05);
+    margin-bottom: 1.5rem;
+  }
+
+  .form-control:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: var(--gold);
+    background: white;
+    box-shadow: 0 0 0 4px rgba(212,175,55,0.25);
+    transform: scale(1.02);
+  }
+
+  textarea { min-height: 130px; resize: vertical; }
+
+  .btn-submit {
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    color: white;
+    border: none;
+    padding: 1rem 2rem;
+    font-size: 1.05rem;
+    font-weight: 700;
+    border-radius: 50px;
+    width: 100%;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    cursor: pointer;
+    transition: all 0.5s ease;
+    box-shadow: 0 10px 30px rgba(212,175,55,0.4);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-submit:hover {
+    transform: translateY(-4px) scale(1.03);
+    box-shadow: 0 18px 50px rgba(212,175,55,0.5);
+  }
+
+  .btn-submit::before {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 0; height: 0;
+    background: rgba(255,255,255,0.3);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+  }
+
+  .btn-submit:active::before { width: 300px; height: 300px; }
+
+  .success-message {
+    display: none;
+    text-align: center;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, rgba(40,167,69,0.1), rgba(40,167,69,0.05));
+    border: 2px dashed #28a745;
+    border-radius: 20px;
+    color: #28a745;
+    font-weight: 600;
+    margin-top: 1rem;
+    animation: fadeInUp 0.6s ease-out;
+  }
+
+  @keyframes fadeInUp {
+    0% { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 768px) {
+    .feedback-form-section { padding: 80px 15px 50px; }
+    .feedback-form-wrapper { padding: 40px 25px; max-width: 95%; }
+    .feedback-form-wrapper h2 { font-size: 1.7rem; }
+  }
+
+  @media (max-width: 576px) {
+    .feedback-form-section { padding: 60px 10px 40px; }
+    .feedback-form-wrapper { padding: 30px 20px; border-radius: 20px; }
+    .feedback-form-wrapper h2 { font-size: 1.5rem; }
+  }
+</style>
+
+<section class="feedback-form-section">
+  <div class="feedback-form-wrapper">
+    <h2><i class="fas fa-star"></i> Feedback for {{ route }}</h2>
+
+    <form id="feedbackForm">
+      {% csrf_token %}
+      <input type="hidden" name="route_id" value="{{ route.id }}">
+      <div class="form-group">
+        <label class="form-label">Type</label>
+        <select class="form-control" name="type" required>
+          <option value="">Select Type</option>
+          <option value="feedback">General Feedback</option>
+          <option value="issue">Report Issue</option>
+          <option value="suggestion">Suggestion</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Subject</label>
+        <input type="text" class="form-control" name="subject" placeholder="Brief title" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Message</label>
+        <textarea class="form-control" name="message" placeholder="Share your experience..." required></textarea>
+      </div>
+      <button type="submit" class="btn-submit">Submit Feedback</button>
+      <div class="success-message" id="feedbackSuccess">
+        Thank you! Your feedback has been submitted.
+      </div>
+    </form>
+  </div>
+</section>
+
+<script>
+  document.getElementById('feedbackForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+
+    fetch('{% url "submit_feedback" route.id %}', {
+      method: 'POST',
+      body: formData,
+      headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        document.querySelector('.btn-submit').style.display = 'none';
+        document.getElementById('feedbackSuccess').style.display = 'block';
+        setTimeout(() => window.location.href = '{% url "route_detail" route.id %}', 2000);
+      } else {
+        alert('Error: ' + (data.error || 'Submission failed'));
+      }
+    })
+    .catch(() => alert('Network error.'));
+  });
+</script>
+{% endblock %}

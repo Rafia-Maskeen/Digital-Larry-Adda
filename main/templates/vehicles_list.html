@@ -1,0 +1,416 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Vehicles - Digital Larry Adda{% endblock %}
+
+{% block content %}
+<style>
+  :root {
+    --gold: #D4AF37;
+    --gold-light: #E8C56A;
+    --gold-dark: #B8941F;
+    --cream: #FFFAF0;
+    --charcoal: #2D2D2D;
+    --soft-white: #FDFDFD;
+    --shadow-soft: 0 12px 40px rgba(212, 175, 55, 0.15);
+    --shadow-hover: 0 30px 80px rgba(212, 175, 55, 0.32);
+  }
+
+  .vehicles-section {
+    padding: 5rem 1.5rem;
+    background: linear-gradient(135deg, #fffdf8 0%, var(--cream) 100%);
+    min-height: 100vh;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .section-header {
+    text-align: center;
+    margin-bottom: 4rem;
+  }
+
+  .section-header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.8rem, 6vw, 4.5rem);
+    color: var(--charcoal);
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: fadeInDown 1s ease-out;
+  }
+
+  .section-header p {
+    font-size: 1.3rem;
+    color: #666;
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  /* Filter Bar */
+  .filter-bar {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 3rem;
+    flex-wrap: wrap;
+  }
+
+  .filter-btn {
+    background: rgba(255,255,255,0.8);
+    backdrop-filter: blur(12px);
+    border: 1.5px solid rgba(212,175,55,0.3);
+    color: var(--charcoal);
+    padding: 0.8rem 1.8rem;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.4s ease;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+  }
+
+  .filter-btn:hover, .filter-btn.active {
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    color: white;
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba(212,175,55,0.3);
+  }
+
+  /* Vehicle Grid */
+  .vehicles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 2.5rem;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .vehicle-card {
+    background: white;
+    border-radius: 28px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: var(--shadow-soft);
+    transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border: 1.5px solid rgba(212,175,55,0.15);
+    perspective: 1000px;
+  }
+
+  .vehicle-card:hover {
+    transform: translateY(-20px) rotateX(5deg);
+    box-shadow: var(--shadow-hover);
+    border-color: var(--gold);
+  }
+
+  .vehicle-image {
+    position: relative;
+    height: 240px;
+    overflow: hidden;
+  }
+
+  .vehicle-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.7s ease;
+    filter: brightness(0.92);
+  }
+
+  .vehicle-card:hover .vehicle-image img {
+    transform: scale(1.12) rotate(1deg);
+    filter: brightness(1);
+  }
+
+  .vehicle-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(180deg, transparent 60%, rgba(212,175,55,0.25) 100%);
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+
+  .vehicle-card:hover .vehicle-overlay {
+    opacity: 1;
+  }
+
+  .status-badge {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    padding: 0.4rem 1rem;
+    border-radius: 50px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    z-index: 2;
+  }
+
+  .status-available {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+  }
+
+  .status-en-route {
+    background: linear-gradient(135deg, #ffc107, #ffd43b);
+    color: #212529;
+  }
+
+  .status-maintenance {
+    background: linear-gradient(135deg, #fd7e14, #f39c12);
+    color: white;
+  }
+
+  .status-offline {
+    background: linear-gradient(135deg, #dc3545, #e4606d);
+    color: white;
+  }
+
+  .card-body {
+    padding: 2rem;
+    text-align: center;
+  }
+
+  .vehicle-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    color: var(--charcoal);
+    margin-bottom: 1rem;
+    font-weight: 700;
+  }
+
+  .vehicle-meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.8rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.95rem;
+    color: #555;
+  }
+
+  .meta-item {
+    background: rgba(212,175,55,0.08);
+    padding: 0.6rem;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+  }
+
+  .vehicle-card:hover .meta-item {
+    background: rgba(212,175,55,0.15);
+    transform: scale(1.05);
+  }
+
+  .meta-label {
+    font-weight: 600;
+    color: var(--gold-dark);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .meta-value {
+    font-weight: 700;
+    color: var(--charcoal);
+  }
+
+  .btn-detail {
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    color: white;
+    border: none;
+    padding: 0.9rem 2rem;
+    font-size: 1rem;
+    font-weight: 700;
+    border-radius: 50px;
+    cursor: pointer;
+    width: 100%;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+    box-shadow: 0 8px 25px rgba(212,175,55,0.35);
+    transition: all 0.5s ease;
+  }
+
+  .btn-detail::before {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 0; height: 0;
+    background: rgba(255,255,255,0.3);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+    z-index: -1;
+  }
+
+  .btn-detail:hover {
+    transform: translateY(-4px) scale(1.05);
+    box-shadow: 0 15px 40px rgba(212,175,55,0.5);
+  }
+
+  .btn-detail:active::before {
+    width: 300px; height: 300px;
+  }
+
+  /* Empty State */
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #888;
+    font-size: 1.2rem;
+  }
+
+  .empty-state i {
+    font-size: 4rem;
+    color: var(--gold);
+    margin-bottom: 1rem;
+    opacity: 0.3;
+  }
+
+  /* Animations */
+  @keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(40px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .vehicle-card {
+    animation: fadeInUp 0.8s ease-out backwards;
+  }
+
+  .vehicle-card:nth-child(1) { animation-delay: 0.1s; }
+  .vehicle-card:nth-child(2) { animation-delay: 0.2s; }
+  .vehicle-card:nth-child(3) { animation-delay: 0.3s; }
+  .vehicle-card:nth-child(4) { animation-delay: 0.4s; }
+
+  /* Responsive */
+  @media (max-width: 992px) {
+    .vehicles-grid {
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 2rem;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .filter-bar {
+      gap: 0.8rem;
+    }
+    .filter-btn {
+      padding: 0.7rem 1.4rem;
+      font-size: 0.9rem;
+    }
+    .vehicle-image {
+      height: 200px;
+    }
+    .card-body {
+      padding: 1.6rem;
+    }
+    .vehicle-name {
+      font-size: 1.4rem;
+    }
+  }
+
+  @media (max-width: 576px) {
+    .vehicles-section {
+      padding: 3rem 1rem;
+    }
+    .section-header h1 {
+      font-size: 2.5rem;
+    }
+    .vehicles-grid {
+      grid-template-columns: 1fr;
+    }
+    .vehicle-meta {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<section class="vehicles-section">
+  <div class="container">
+    <div class="section-header">
+      <h1>Our Premium Fleet</h1>
+      <p>Explore luxury vehicles engineered for comfort, safety, and unmatched performance.</p>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="available">Available</button>
+      <button class="filter-btn" data-filter="en-route">En Route</button>
+      <button class="filter-btn" data-filter="maintenance">Maintenance</button>
+    </div>
+
+    <!-- Vehicles Grid -->
+    <div class="vehicles-grid">
+      {% for vehicle in vehicles %}
+        <div class="vehicle-card" data-status="{% if vehicle.status == 'Available' %}available{% elif vehicle.status == 'En Route' %}en-route{% elif vehicle.status == 'Maintenance' %}maintenance{% else %}offline{% endif %}">
+          <div class="vehicle-image">
+            {% if vehicle.image %}
+              <img src="{{ vehicle.image.url }}" alt="{{ vehicle.name }}">
+            {% else %}
+              <img src="{% static 'images/default_car.jpg' %}" alt="Default Vehicle">
+            {% endif %}
+            <div class="vehicle-overlay"></div>
+            <div class="status-badge 
+              {% if vehicle.status == 'Available' %}status-available
+              {% elif vehicle.status == 'En Route' %}status-en-route
+              {% elif vehicle.status == 'Maintenance' %}status-maintenance
+              {% else %}status-offline{% endif %}">
+              {{ vehicle.status }}
+            </div>
+          </div>
+          <div class="card-body">
+            <h3 class="vehicle-name">{{ vehicle.name }}</h3>
+            <div class="vehicle-meta">
+              <div class="meta-item">
+                <div class="meta-label">Plate</div>
+                <div class="meta-value">{{ vehicle.number_plate }}</div>
+              </div>
+              <div class="meta-item">
+                <div class="meta-label">Driver</div>
+                <div class="meta-value">
+                  {% if vehicle.driver %}{{ vehicle.driver.username }}{% else %}—{% endif %}
+                </div>
+              </div>
+            </div>
+            <a href="{% url 'vehicle_detail' vehicle.id %}" class="btn-detail">View Details</a>
+          </div>
+        </div>
+      {% empty %}
+        <div class="empty-state">
+          <i class="fas fa-car-side"></i>
+          <p>No vehicles available at the moment.</p>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<script>
+  // Filter Functionality
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      
+      const filter = btn.getAttribute('data-filter');
+      document.querySelectorAll('.vehicle-card').forEach(card => {
+        const status = card.getAttribute('data-status');
+        if (filter === 'all' || status === filter) {
+          card.style.display = 'block';
+          card.style.animation = 'fadeInUp 0.6s ease-out forwards';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    });
+  });
+</script>
+{% endblock %}

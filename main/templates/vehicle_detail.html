@@ -1,0 +1,453 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ vehicle.name }} - Digital Larry Adda{% endblock %}
+
+{% block content %}
+<style>
+  :root {
+    --gold: #D4AF37;
+    --gold-light: #E8C56A;
+    --gold-dark: #B8941F;
+    --cream: #FFFAF0;
+    --charcoal: #2D2D2D;
+    --soft-white: #FDFDFD;
+    --shadow-soft: 0 15px 50px rgba(212, 175, 55, 0.18);
+    --shadow-hover: 0 30px 90px rgba(212, 175, 55, 0.35);
+  }
+
+  .detail-section {
+    min-height: 100vh;
+    padding: 5rem 1.5rem;
+    background: linear-gradient(135deg, #fffdf8 0%, var(--cream) 100%);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .detail-section::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: 
+      radial-gradient(circle at 20% 80%, rgba(212,175,55,0.12) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(212,175,55,0.08) 0%, transparent 50%);
+    z-index: 0;
+    animation: breathe 12s ease-in-out infinite;
+  }
+
+  @keyframes breathe {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+  }
+
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 2;
+  }
+
+  /* ===== VEHICLE CARD (3D ROTATE) ===== */
+  .vehicle-card {
+    background: white;
+    border-radius: 32px;
+    overflow: hidden;
+    box-shadow: var(--shadow-soft);
+    transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    border: 1.5px solid rgba(212,175,55,0.2);
+    perspective: 1200px;
+    margin-bottom: 4rem;
+  }
+
+  .vehicle-card:hover {
+    transform: translateY(-15px) rotateX(8deg);
+    box-shadow: var(--shadow-hover);
+    border-color: var(--gold);
+  }
+
+  .vehicle-image {
+    position: relative;
+    height: 320px;
+    overflow: hidden;
+  }
+
+  .vehicle-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.8s ease;
+  }
+
+  .vehicle-card:hover .vehicle-image img {
+    transform: scale(1.15);
+  }
+
+  .status-badge {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    padding: 0.6rem 1.4rem;
+    border-radius: 50px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 6px 20px rgba(40,167,69,0.4);
+    z-index: 3;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+
+  .status-maintenance {
+    background: linear-gradient(135deg, #fd7e14, #f39c12);
+  }
+
+  .status-offline {
+    background: linear-gradient(135deg, #dc3545, #e4606d);
+  }
+
+  .card-body {
+    padding: 2.5rem;
+    text-align: center;
+  }
+
+  .vehicle-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.2rem;
+    color: var(--charcoal);
+    margin-bottom: 1.5rem;
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1.2rem;
+    margin: 2rem 0;
+  }
+
+  .detail-item {
+    background: rgba(212,175,55,0.08);
+    padding: 1rem;
+    border-radius: 16px;
+    transition: all 0.4s ease;
+  }
+
+  .vehicle-card:hover .detail-item {
+    background: rgba(212,175,55,0.18);
+    transform: translateY(-4px);
+  }
+
+  .detail-label {
+    font-size: 0.85rem;
+    color: var(--gold-dark);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-weight: 600;
+  }
+
+  .detail-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--charcoal);
+    margin-top: 0.3rem;
+  }
+
+  .seat-map {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin: 1.5rem 0;
+    justify-items: center;
+  }
+
+  .seat {
+    width: 36px;
+    height: 36px;
+    background: #e9ecef;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: #666;
+    transition: all 0.3s ease;
+  }
+
+  .seat.booked {
+    background: #dc3545;
+    color: white;
+  }
+
+  .seat.available {
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    color: white;
+    animation: glow 2s infinite;
+  }
+
+  @keyframes glow {
+    0%, 100% { box-shadow: 0 0 10px rgba(212,175,55,0.4); }
+    50% { box-shadow: 0 0 20px rgba(212,175,55,0.7); }
+  }
+
+  .btn-golden {
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
+    color: white;
+    border: none;
+    padding: 1rem 2.5rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    border-radius: 50px;
+    cursor: pointer;
+    width: 100%;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+    box-shadow: 0 10px 30px rgba(212,175,55,0.4);
+    transition: all 0.5s ease;
+    margin: 1rem 0;
+  }
+
+  .btn-golden::before {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 0; height: 0;
+    background: rgba(255,255,255,0.3);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+    z-index: -1;
+  }
+
+  .btn-golden:hover {
+    transform: translateY(-5px) scale(1.03);
+    box-shadow: 0 20px 50px rgba(212,175,55,0.5);
+  }
+
+  .btn-golden:active::before {
+    width: 300px; height: 300px;
+  }
+
+  .btn-back {
+    background: rgba(255,255,255,0.9);
+    color: var(--charcoal);
+    border: 1.5px solid rgba(212,175,55,0.3);
+  }
+
+  .btn-back:hover {
+    background: white;
+    border-color: var(--gold);
+  }
+
+  /* ===== ROUTE TIMELINE ===== */
+  .route-timeline {
+    position: relative;
+    max-width: 800px;
+    margin: 4rem auto;
+    padding: 2rem 0;
+  }
+
+  .timeline-line {
+    position: absolute;
+    top: 0; bottom: 0; left: 50%;
+    width: 4px;
+    background: linear-gradient(to bottom, transparent, var(--gold), transparent);
+    transform: translateX(-50%);
+    border-radius: 2px;
+  }
+
+  .route-item {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 3rem 0;
+    position: relative;
+  }
+
+  .route-item:nth-child(odd) .route-content {
+    text-align: right;
+    padding-right: 4rem;
+  }
+
+  .route-item:nth-child(even) .route-content {
+    text-align: left;
+    padding-left: 4rem;
+  }
+
+  .route-content {
+    background: white;
+    padding: 1.8rem;
+    border-radius: 20px;
+    box-shadow: var(--shadow-soft);
+    width: 45%;
+    position: relative;
+    border: 1px solid rgba(212,175,55,0.15);
+    transition: all 0.4s ease;
+  }
+
+  .route-content:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-hover);
+    border-color: var(--gold);
+  }
+
+  .route-content::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 0; height: 0;
+    border: 14px solid transparent;
+    transform: translateY(-50%);
+  }
+
+  .route-item:nth-child(odd) .route-content::after {
+    right: -28px;
+    border-left-color: white;
+  }
+
+  .route-item:nth-child(even) .route-content::after {
+    left: -28px;
+    border-right-color: white;
+  }
+
+  .route-dot {
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    background: var(--gold);
+    border: 5px solid white;
+    border-radius: 50%;
+    box-shadow: 0 0 0 8px rgba(212,175,55,0.3);
+    z-index: 2;
+  }
+
+  .route-title {
+    font-weight: 700;
+    color: var(--charcoal);
+    margin-bottom: 0.5rem;
+  }
+
+  .route-time {
+    font-size: 0.95rem;
+    color: #666;
+  }
+
+  /* Responsive */
+  @media (max-width: 992px) {
+    .timeline-line { left: 40px; }
+    .route-item { flex-direction: column; }
+    .route-content { width: 80%; text-align: left !important; padding-left: 4.5rem !important; }
+    .route-content::after { left: -28px !important; border-right-color: white !important; border-left-color: transparent !important; }
+    .route-dot { left: 28px; }
+  }
+
+  @media (max-width: 768px) {
+    .vehicle-image { height: 260px; }
+    .vehicle-name { font-size: 1.8rem; }
+    .detail-grid { grid-template-columns: 1fr 1fr; }
+    .seat-map { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  @media (max-width: 576px) {
+    .detail-section { padding: 3rem 1rem; }
+    .vehicle-card { border-radius: 24px; }
+    .card-body { padding: 2rem; }
+    .vehicle-name { font-size: 1.6rem; }
+    .btn-golden { padding: 0.9rem; font-size: 1rem; }
+    .route-content { padding: 1.5rem; }
+  }
+</style>
+
+<section class="detail-section">
+  <div class="container">
+
+    <!-- VEHICLE CARD -->
+    <div class="vehicle-card">
+      <div class="vehicle-image">
+        {% if vehicle.image %}
+          <img src="{{ vehicle.image.url }}" alt="{{ vehicle.name }}">
+        {% else %}
+          <img src="{% static 'images/default_car.jpg' %}" alt="Default Vehicle">
+        {% endif %}
+        <div class="status-badge 
+          {% if vehicle.status == 'Available' %}status-available
+          {% elif vehicle.status == 'Maintenance' %}status-maintenance
+          {% else %}status-offline{% endif %}">
+          {{ vehicle.status }}
+        </div>
+      </div>
+
+      <div class="card-body">
+        <h3 class="vehicle-name">{{ vehicle.name }}</h3>
+
+        <div class="detail-grid">
+          <div class="detail-item">
+            <div class="detail-label">Plate</div>
+            <div class="detail-value">{{ vehicle.number_plate }}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Driver</div>
+            <div class="detail-value">{{ vehicle.driver.username|default:"—" }}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Manager</div>
+            <div class="detail-value">{{ vehicle.manager.username|default:"—" }}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Travel Time</div>
+            <div class="detail-value">{{ expected_time }}</div>
+          </div>
+        </div>
+
+        <!-- Seat Map -->
+      
+
+        <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+          {% if routes %}
+            <a href="{% url 'book_route' routes.0.id %}" class="btn-golden">Book Now</a>
+          {% else %}
+            <p style="color: #dc3545; font-weight: 600; width: 100%; text-align: center;">
+              No route available
+            </p>
+          {% endif %}
+          <a href="{% url 'vehicles' %}" class="btn-golden btn-back">Back to Fleet</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ROUTE TIMELINE -->
+    {% if routes %}
+    <div class="route-timeline">
+      <div class="timeline-line"></div>
+      {% for route in routes %}
+        <div class="route-item">
+          <div class="route-dot"></div>
+          <div class="route-content">
+            <div class="route-title">{{ route.start_location }} → {{ route.end_location }}</div>
+            <div class="route-time">
+              Departure: {{ route.departure_time }} | Arrival: {{ route.arrival_time }}
+            </div>
+            <a href="{% url 'book_route' route.id %}" class="btn-golden" style="margin-top: 1rem; font-size: 0.95rem; padding: 0.8rem 1.8rem;">
+              Book This Route
+            </a>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+  </div>
+</section>
+{% endblock %}

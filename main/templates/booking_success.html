@@ -1,0 +1,328 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Booking Confirmed - Digital Larry Adda{% endblock %}
+
+{% block content %}
+<style>
+  :root {
+    --gold: #D4AF37;
+    --gold-light: #E8C56A;
+    --gold-dark: #B8941F;
+    --cream: #FFFAF0;
+    --charcoal: #2D2D2D;
+    --success-green: #28a745;
+    --shadow-soft: 0 20px 60px rgba(212, 175, 55, 0.22);
+    --shadow-hover: 0 35px 100px rgba(212, 175, 55, 0.45);
+  }
+
+  .success-section {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6rem 1.5rem;
+    background: linear-gradient(135deg, #fffdf8 0%, var(--cream) 100%);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .success-section::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: 
+      radial-gradient(circle at 20% 80%, rgba(212,175,55,0.18) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(212,175,55,0.12) 0%, transparent 50%);
+    z-index: 0;
+    animation: pulseGlow 10s ease-in-out infinite;
+  }
+
+  @keyframes pulseGlow {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+  }
+
+  .orb {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, var(--gold-light), var(--gold));
+    filter: blur(2px);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 1;
+    animation: floatOrb 12s infinite ease-in-out;
+  }
+
+  @keyframes floatOrb {
+    0%, 100% { transform: translateY(0) scale(1); opacity: 0.3; }
+    50% { transform: translateY(-60px) scale(1.4); opacity: 0.7; }
+  }
+
+  .success-card {
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 36px;
+    padding: 4rem 3rem;
+    max-width: 560px;
+    width: 100%;
+    box-shadow: var(--shadow-soft), inset 0 0 50px rgba(212,175,55,0.12);
+    border: 2px solid rgba(212,175,55,0.3);
+    position: relative;
+    z-index: 2;
+    transition: all 0.7s cubic-bezier(0.25, 0.8, 0.25, 1);
+    animation: riseIn 1.2s ease-out forwards;
+  }
+
+  @keyframes riseIn {
+    0% { 
+      opacity: 0; 
+      transform: translateY(40px) scale(0.95); 
+    }
+    100% { 
+      opacity: 1; 
+      transform: translateY(0) scale(1); 
+    }
+  }
+
+  .success-card:hover {
+    transform: translateY(-15px) scale(1.02);
+    box-shadow: var(--shadow-hover);
+    border-color: var(--gold);
+  }
+
+  .check-icon {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 1.5rem;
+    background: linear-gradient(135deg, var(--success-green), #20c997);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 12px 40px rgba(40, 167, 69, 0.4);
+    animation: checkPop 0.8s ease-out 0.5s both;
+  }
+
+  @keyframes checkPop {
+    0% { transform: scale(0); }
+    70% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+  }
+
+  .check-icon i {
+    color: white;
+    font-size: 3.2rem;
+    animation: checkDraw 0.6s ease-out 1.1s both;
+  }
+
+  @keyframes checkDraw {
+    0% { 
+      transform: scale(0) rotate(-45deg); 
+      opacity: 0; 
+    }
+    100% { 
+      transform: scale(1) rotate(0); 
+      opacity: 1; 
+    }
+  }
+
+  .success-card h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.2rem, 6vw, 2.8rem);
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: fadeInUp 0.8s ease-out 1.3s both;
+  }
+
+  @keyframes fadeInUp {
+    0% { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  .success-card p {
+    font-size: 1.1rem;
+    color: var(--charcoal);
+    margin-bottom: 2rem;
+    animation: fadeInUp 0.8s ease-out 1.5s both;
+  }
+
+  .btn-golden {
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
+    color: white;
+    border: none;
+    padding: 1rem 2.2rem;
+    font-size: 1.05rem;
+    font-weight: 700;
+    border-radius: 50px;
+    text-transform: uppercase;
+    letter-spacing: 1.8px;
+    box-shadow: 0 10px 30px rgba(212,175,55,0.4);
+    transition: all 0.5s ease;
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+  }
+
+  .btn-golden::before {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 0; height: 0;
+    background: rgba(255,255,255,0.3);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+    z-index: -1;
+  }
+
+  .btn-golden:hover {
+    transform: translateY(-5px) scale(1.05);
+    box-shadow: 0 20px 50px rgba(212,175,55,0.5);
+  }
+
+  .btn-golden:active::before {
+    width: 300px; height: 300px;
+  }
+
+  .btn-secondary-custom {
+    background: linear-gradient(135deg, #6c757d, #5a6268);
+    color: white;
+    margin-left: 0.8rem;
+  }
+
+  .btn-secondary-custom:hover {
+    background: linear-gradient(135deg, #5a6268, #495057);
+    transform: translateY(-5px) scale(1.05);
+  }
+
+  .sparkle {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: var(--gold);
+    border-radius: 50%;
+    pointer-events: none;
+    animation: sparkle 1.5s ease-out forwards;
+  }
+
+  @keyframes sparkle {
+    0% { 
+      transform: scale(0) rotate(0deg); 
+      opacity: 1; 
+    }
+    100% { 
+      transform: scale(1) rotate(180deg); 
+      opacity: 0; 
+    }
+  }
+
+  @media (max-width: 768px) {
+    .success-card { padding: 3rem 2rem; }
+    .check-icon { width: 100px; height: 100px; }
+    .check-icon i { font-size: 2.8rem; }
+  }
+
+  @media (max-width: 576px) {
+    .success-section { padding: 4rem 1rem; }
+    .success-card { padding: 2.5rem 1.5rem; border-radius: 28px; }
+    .btn-golden, .btn-secondary-custom { 
+      display: block; 
+      width: 100%; 
+      margin: 0.5rem 0; 
+    }
+    .btn-secondary-custom { margin-left: 0; }
+  }
+</style>
+
+<section class="success-section">
+  <div class="orb" style="width:100px;height:100px;top:12%;left:10%;animation-delay:0s;"></div>
+  <div class="orb" style="width:80px;height:80px;top:70%;right:15%;animation-delay:2s;"></div>
+  <div class="orb" style="width:120px;height:120px;bottom:18%;left:8%;animation-delay:4s;"></div>
+
+  <div class="success-card">
+    <div class="check-icon">
+      <i class="fas fa-check"></i>
+    </div>
+    
+    <h2>Booking Confirmed!</h2>
+    <p class="lead">Your journey is secured. A confirmation email has been sent with all details.</p>
+    
+    <div class="text-center">
+      <a href="{% url 'home' %}" class="btn btn-golden mb-2" id="home-btn">
+        <i class="fas fa-home me-2"></i>Back to Home
+      </a>
+      <a href="{% url 'route_list' %}" class="btn btn-golden btn-secondary-custom" id="routes-btn">
+        <i class="fas fa-bus me-2"></i>More Routes
+      </a>
+    </div>
+  </div>
+</section>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/js/all.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Golden confetti explosion
+    setTimeout(() => {
+      confetti({
+        particleCount: 180,
+        spread: 80,
+        origin: { y: 0.55 },
+        colors: ['#D4AF37', '#E8C56A', '#B8941F', '#FFD700', '#FFA500'],
+        scalar: 1.2,
+        ticks: 200
+      });
+    }, 800);
+
+    // Sparkles around check icon
+    const checkIcon = document.querySelector('.check-icon');
+    for (let i = 0; i < 12; i++) {
+      setTimeout(() => {
+        const sparkle = document.createElement('div');
+        sparkle.className = 'sparkle';
+        const angle = (i * 30) * (Math.PI / 180);
+        const distance = 80;
+        const x = Math.cos(angle) * distance;
+        const y = Math.sin(angle) * distance;
+        sparkle.style.left = `calc(50% + ${x}px)`;
+        sparkle.style.top = `calc(50% + ${y}px)`;
+        checkIcon.appendChild(sparkle);
+        setTimeout(() => sparkle.remove(), 1500);
+      }, i * 100);
+    }
+
+    // Button hover ripple
+    document.querySelectorAll('.btn-golden').forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        const ripple = document.createElement('span');
+        ripple.style.position = 'absolute';
+        ripple.style.borderRadius = '50%';
+        ripple.style.background = 'rgba(255,255,255,0.6)';
+        ripple.style.transform = 'scale(0)';
+        ripple.style.animation = 'ripple 0.6s ease-out';
+        ripple.style.left = `${e.clientX - this.offsetLeft}px`;
+        ripple.style.top = `${e.clientY - this.offsetTop}px`;
+        ripple.style.width = ripple.style.height = '10px';
+        this.appendChild(ripple);
+        setTimeout(() => ripple.remove(), 600);
+      });
+    });
+
+    // Add ripple animation
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes ripple {
+        to {
+          transform: scale(20);
+          opacity: 0;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  });
+</script>
+{% endblock %}

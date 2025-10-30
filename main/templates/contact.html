@@ -1,0 +1,270 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Contact - Digital Larry Adda{% endblock %}
+
+{% block content %}
+<style>
+  :root {
+    --gold: #D4AF37;
+    --gold-light: #E8C56A;
+    --gold-dark: #B8941F;
+    --cream: #FFFAF0;
+    --charcoal: #2D2D2D;
+    --soft-white: #FDFDFD;
+    --shadow-soft: 0 12px 40px rgba(212, 175, 55, 0.15);
+    --shadow-hover: 0 30px 80px rgba(212, 175, 55, 0.3);
+  }
+
+  .contact-section {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6rem 1.5rem;
+    background: linear-gradient(135deg, #fffdf8 0%, var(--cream) 100%);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .contact-section::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: 
+      radial-gradient(circle at 20% 80%, rgba(212,175,55,0.12) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(212,175,55,0.08) 0%, transparent 50%);
+    z-index: 0;
+    animation: breathe 12s ease-in-out infinite;
+  }
+
+  @keyframes breathe {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+  }
+
+  /* Floating Gold Orbs */
+  .orb {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, var(--gold-light), var(--gold));
+    filter: blur(1px);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 1;
+    animation: floatOrb 8s infinite ease-in-out;
+  }
+
+  @keyframes floatOrb {
+    0%, 100% { transform: translateY(0) scale(1); opacity: 0.3; }
+    50% { transform: translateY(-40px) scale(1.2); opacity: 0.6; }
+  }
+
+  /* Glassmorphic Form */
+  .contact-card {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-radius: 32px;
+    padding: 3.5rem;
+    max-width: 560px;
+    width: 100%;
+    box-shadow: var(--shadow-soft), inset 0 0 30px rgba(212,175,55,0.08);
+    border: 1.5px solid rgba(212,175,55,0.2);
+    position: relative;
+    z-index: 2;
+    transition: all 0.5s ease;
+  }
+
+  .contact-card:hover {
+    transform: translateY(-12px);
+    box-shadow: var(--shadow-hover);
+    border-color: rgba(212,175,55,0.4);
+  }
+
+  .contact-card h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.2rem, 5vw, 3rem);
+    text-align: center;
+    margin-bottom: 2.5rem;
+    color: var(--charcoal);
+    position: relative;
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .contact-card h2::after {
+    content: '';
+    position: absolute;
+    bottom: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 4px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    border-radius: 2px;
+    animation: underlineGrow 1.5s ease-out forwards;
+  }
+
+  @keyframes underlineGrow {
+    from { width: 0; }
+    to { width: 80px; }
+  }
+
+  .form-group {
+    position: relative;
+    margin-bottom: 1.8rem;
+  }
+
+  .form-label {
+    position: absolute;
+    top: 50%;
+    left: 1.2rem;
+    transform: translateY(-50%);
+    font-size: 1rem;
+    font-weight: 600;
+    color: #666;
+    pointer-events: none;
+    transition: all 0.3s ease;
+    z-index: 1;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+
+  .form-control {
+    width: 100%;
+    padding: 1.1rem 1.2rem;
+    font-size: 1rem;
+    background: rgba(255, 255, 255, 0.7);
+    border: 1.5px solid rgba(212,175,55,0.2);
+    border-radius: 18px;
+    transition: all 0.4s ease;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    position: relative;
+    z-index: 0;
+  }
+
+  .form-control:focus {
+    outline: none;
+    border-color: var(--gold);
+    background: white;
+    box-shadow: 0 8px 30px rgba(212,175,55,0.2);
+    transform: scale(1.02);
+  }
+
+  .form-control:focus + .form-label,
+  .form-control:not(:placeholder-shown) + .form-label {
+    top: -10px;
+    left: 1rem;
+    font-size: 0.8rem;
+    color: var(--gold-dark);
+    background: white;
+    padding: 0 0.5rem;
+    font-weight: 700;
+  }
+
+  .form-control::placeholder {
+    color: transparent;
+  }
+
+  /* Submit Button */
+  .btn-golden {
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
+    color: white;
+    border: none;
+    padding: 1.2rem 2.5rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    border-radius: 50px;
+    width: 100%;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+    text-transform: uppercase;
+    letter-spacing: 1.8px;
+    box-shadow: 0 10px 30px rgba(212,175,55,0.4);
+    transition: all 0.5s ease;
+  }
+
+  .btn-golden::before {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 0; height: 0;
+    background: rgba(255,255,255,0.3);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+    z-index: -1;
+  }
+
+  .btn-golden:hover {
+    transform: translateY(-5px) scale(1.03);
+    box-shadow: 0 20px 50px rgba(212,175,55,0.5);
+  }
+
+  .btn-golden:active::before {
+    width: 300px;
+    height: 300px;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .contact-card {
+      padding: 2.5rem;
+      border-radius: 24px;
+    }
+    .contact-card h2 {
+      font-size: 2.2rem;
+    }
+  }
+
+  @media (max-width: 576px) {
+    .contact-section {
+      padding: 4rem 1rem;
+    }
+    .contact-card {
+      padding: 2rem;
+    }
+    .form-control {
+      padding: 1rem;
+    }
+    .btn-golden {
+      padding: 1rem;
+      font-size: 1rem;
+    }
+  }
+</style>
+
+<section class="contact-section">
+  <!-- Floating Orbs -->
+  <div class="orb" style="width:80px;height:80px;top:15%;left:10%;animation-delay:0s;"></div>
+  <div class="orb" style="width:60px;height:60px;top:70%;right:15%;animation-delay:2s;"></div>
+  <div class="orb" style="width:100px;height:100px;bottom:20%;left:5%;animation-delay:4s;"></div>
+
+  <div class="contact-card">
+    <h2>Plan Your Journey</h2>
+    <form method="GET" action="{% url 'available_vehicles' %}">
+      {% csrf_token %}
+      
+      <div class="form-group">
+        <input type="text" class="form-control" id="pickup" name="pickup" placeholder=" " required>
+        <label for="pickup" class="form-label">Pickup Location</label>
+      </div>
+
+      <div class="form-group">
+        <input type="text" class="form-control" id="drop" name="dropoff" placeholder=" " required>
+        <label for="drop" class="form-label">Drop-off Location</label>
+      </div>
+
+      <div class="form-group">
+        <input type="time" class="form-control" id="ride_time" name="ride_time" placeholder=" ">
+        <label for="ride_time" class="form-label">Preferred Time</label>
+      </div>
+
+      <button type="submit" class="btn-golden">Show Available Vehicles</button>
+    </form>
+  </div>
+</section>
+{% endblock %}

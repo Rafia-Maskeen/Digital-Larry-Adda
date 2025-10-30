@@ -1,0 +1,415 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Real-Time Tracking - Digital Larry Adda{% endblock %}
+
+{% block content %}
+<style>
+  :root {
+    --gold: #D4AF37;
+    --gold-light: #E8C56A;
+    --gold-dark: #B8941F;
+    --cream: #FFFAF0;
+    --charcoal: #2D2D2D;
+    --shadow-soft: 0 22px 65px rgba(212, 175, 55, 0.25);
+    --shadow-hover: 0 38px 110px rgba(212, 175, 55, 0.48);
+  }
+
+  .map-section {
+    min-height: 100vh;
+    padding: 7rem 1.5rem 5rem;
+    background: linear-gradient(135deg, #fffdf8 0%, var(--cream) 100%);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .map-section::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: 
+      radial-gradient(circle at 10% 90%, rgba(212,175,55,0.18) 0%, transparent 50%),
+      radial-gradient(circle at 90% 10%, rgba(212,175,55,0.13) 0%, transparent 50%);
+    z-index: 0;
+    animation: breathe 14s ease-in-out infinite;
+  }
+
+  @keyframes breathe {
+    0%, 100% { opacity: 0.7; }
+    50% { opacity: 1; }
+  }
+
+  .orb {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, var(--gold-light), var(--gold));
+    filter: blur(2.5px);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 1;
+    animation: floatOrb 13s infinite ease-in-out;
+  }
+
+  @keyframes floatOrb {
+    0%, 100% { transform: translateY(0) scale(1); opacity: 0.3; }
+    50% { transform: translateY(-70px) scale(1.5); opacity: 0.78; }
+  }
+
+  .map-header {
+    text-align: center;
+    margin-bottom: 3rem;
+    position: relative;
+    z-index: 2;
+  }
+
+  .map-header h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.5rem, 6vw, 3.4rem);
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin: 0 0 1rem;
+    letter-spacing: 1.8px;
+    text-transform: uppercase;
+    animation: fadeInDown 1s ease-out;
+  }
+
+  .map-header h2::after {
+    content: '';
+    position: absolute;
+    bottom: -16px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 6px;
+    background: linear-gradient(90deg, var(--gold-dark), var(--gold));
+    border-radius: 3px;
+    animation: lineGrow 1.4s ease-out 0.8s both;
+  }
+
+  @keyframes lineGrow {
+    0% { width: 0; }
+    100% { width: 120px; }
+  }
+
+  @keyframes fadeInDown {
+    0% { opacity: 0; transform: translateY(-35px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  .map-header p {
+    color: var(--charcoal);
+    font-size: 1.15rem;
+    margin: 0;
+    animation: fadeInUp 1s ease-out 1.2s both;
+  }
+
+  @keyframes fadeInUp {
+    0% { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  .map-container {
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(26px);
+    -webkit-backdrop-filter: blur(26px);
+    border-radius: 36px;
+    padding: 2.5rem;
+    box-shadow: var(--shadow-soft), inset 0 0 70px rgba(212,175,55,0.15);
+    border: 2.5px solid rgba(212,175,55,0.35);
+    position: relative;
+    z-index: 2;
+    transition: all 0.8s cubic-bezier(0.25, 0.8, 0.25, 1);
+    animation: riseIn 1.4s ease-out forwards;
+  }
+
+  @keyframes riseIn {
+    0% { 
+      opacity: 0; 
+      transform: translateY(60px) scale(0.93); 
+    }
+    100% { 
+      opacity: 1; 
+      transform: translateY(0) scale(1); 
+    }
+  }
+
+  .map-container:hover {
+    transform: translateY(-20px) scale(1.02);
+    box-shadow: var(--shadow-hover);
+    border-color: var(--gold);
+  }
+
+  #map {
+    height: 620px;
+    width: 100%;
+    border-radius: 28px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.18);
+    border: 2px solid rgba(212,175,55,0.4);
+    transition: all 0.6s ease;
+  }
+
+  #map:hover {
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    border-color: var(--gold);
+  }
+
+  .leaflet-popup-content-wrapper {
+    background: rgba(255,255,255,0.96);
+    backdrop-filter: blur(12px);
+    border-radius: 18px;
+    padding: 0.8rem 1rem;
+    box-shadow: 0 8px 30px rgba(212,175,55,0.3);
+    border: 1.5px solid rgba(212,175,55,0.4);
+    font-family: inherit;
+  }
+
+  .leaflet-popup-content {
+    margin: 0;
+    font-size: 0.95rem;
+    color: var(--charcoal);
+    line-height: 1.5;
+  }
+
+  .leaflet-popup-content strong {
+    color: var(--gold-dark);
+    font-weight: 700;
+  }
+
+  .leaflet-popup-tip {
+    background: var(--gold);
+    box-shadow: 0 3px 14px rgba(212,175,55,0.4);
+  }
+
+  .status-indicator {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    background: #28a745;
+    border-radius: 50%;
+    margin-right: 8px;
+    animation: pulse 2s infinite;
+    box-shadow: 0 0 12px rgba(40,167,69,0.6);
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.3); opacity: 0.7; }
+  }
+
+  .legend {
+    position: absolute;
+    bottom: 30px;
+    right: 30px;
+    background: rgba(255,255,255,0.94);
+    backdrop-filter: blur(16px);
+    border-radius: 20px;
+    padding: 1rem 1.3rem;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+    border: 1.5px solid rgba(212,175,55,0.3);
+    font-size: 0.9rem;
+    color: var(--charcoal);
+    z-index: 1000;
+    animation: fadeInUp 1s ease-out 1.6s both;
+  }
+
+  .legend h6 {
+    margin: 0 0 0.5rem;
+    color: var(--gold-dark);
+    font-weight: 700;
+    font-size: 0.95rem;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.4rem;
+  }
+
+  .legend-item:last-child { margin-bottom: 0; }
+
+  .legend-color {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    margin-right: 8px;
+    box-shadow: 0 0 8px rgba(0,0,0,0.2);
+  }
+
+  .legend-color.online { background: #28a745; }
+  .legend-color.delayed { background: #ffc107; }
+  .legend-color.offline { background: #dc3545; }
+
+  @media (max-width: 992px) {
+    #map { height: 520px; }
+    .map-container { padding: 2rem; }
+  }
+
+  @media (max-width: 768px) {
+    .map-section { padding: 5rem 1rem; }
+    .map-header h2 { font-size: 2.4rem; }
+    #map { height: 420px; }
+    .legend { bottom: 20px; right: 20px; padding: 0.8rem 1rem; font-size: 0.85rem; }
+  }
+
+  @media (max-width: 576px) {
+    .map-header h2 { font-size: 2rem; }
+    #map { height: 340px; border-radius: 20px; }
+    .map-container { padding: 1.8rem; border-radius: 28px; }
+    .legend { bottom: 15px; right: 15px; padding: 0.6rem 0.9rem; }
+  }
+</style>
+
+<section class="map-section">
+  <div class="orb" style="width:110px;height:110px;top:12%;left:8%;animation-delay:0s;"></div>
+  <div class="orb" style="width:90px;height:90px;top:70%;right:14%;animation-delay:2.5s;"></div>
+  <div class="orb" style="width:130px;height:130px;bottom:16%;left:7%;animation-delay:5s;"></div>
+
+  <div class="container">
+    <div class="map-header">
+      <h2>Real-Time Tracking</h2>
+      <p>Watch your fleet move across the city in golden glory</p>
+    </div>
+
+    <div class="map-container">
+      <div id="map"></div>
+
+      <div class="legend">
+        <h6>Live Status</h6>
+        <div class="legend-item">
+          <div class="legend-color online"></div>
+          <span>Online</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color delayed"></div>
+          <span>Delayed</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color offline"></div>
+          <span>Offline</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Golden confetti on load
+    setTimeout(() => {
+      confetti({
+        particleCount: 130,
+        spread: 80,
+        origin: { y: 0.35 },
+        colors: ['#D4AF37', '#E8C56A', '#B8941F', '#FFD700'],
+        scalar: 1.1,
+        ticks: 200
+      });
+    }, 1100);
+
+    // Initialize map
+    const map = L.map('map').setView([33.6844, 73.0479], 11);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors',
+      maxZoom: 19,
+    }).addTo(map);
+
+    const markers = {};
+    const statusColors = {
+      'online': '#28a745',
+      'delayed': '#ffc107',
+      'offline': '#dc3545'
+    };
+
+    function getIcon(status = 'online') {
+      return L.divIcon({
+        className: 'custom-marker',
+        html: `<div style="
+          width: 36px; height: 36px;
+          background: ${statusColors[status]};
+          border: 4px solid white;
+          border-radius: 50%;
+          box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          animation: pulse 2s infinite;
+        ">
+          <i class="fas fa-bus" style="color: white; font-size: 16px;"></i>
+        </div>`,
+        iconSize: [36, 36],
+        iconAnchor: [18, 18],
+        popupAnchor: [0, -18]
+      });
+    }
+
+    function updateLocations() {
+      fetch('{% url "vehicle_locations_json" %}')
+        .then(response => response.json())
+        .then(data => {
+          const bounds = [];
+          let hasUpdates = false;
+
+          data.locations.forEach(loc => {
+            const status = loc.status || 'online';
+            const latLng = [loc.lat, loc.lng];
+
+            if (markers[loc.id]) {
+              const marker = markers[loc.id];
+              marker.setLatLng(latLng);
+              marker.setIcon(getIcon(status));
+              marker.getPopup().setContent(`
+                <strong>Vehicle:</strong> ${loc.vehicle_name || loc.id}<br>
+                <strong>Route:</strong> ${loc.route || 'N/A'}<br>
+                <strong>Status:</strong> 
+                <span class="status-indicator" style="background: ${statusColors[status]}"></span>
+                ${status.charAt(0).toUpperCase() + status.slice(1)}
+              `);
+              hasUpdates = true;
+            } else {
+              markers[loc.id] = L.marker(latLng, { icon: getIcon(status) })
+                .addTo(map)
+                .bindPopup(`
+                  <strong>Vehicle:</strong> ${loc.vehicle_name || loc.id}<br>
+                  <strong>Route:</strong> ${loc.route || 'N/A'}<br>
+                  <strong>Status:</strong> 
+                  <span class="status-indicator" style="background: ${statusColors[status]}"></span>
+                  ${status.charAt(0).toUpperCase() + status.slice(1)}
+                `);
+              hasUpdates = true;
+            }
+            bounds.push(latLng);
+          });
+
+          if (hasUpdates && bounds.length > 0) {
+            map.fitBounds(bounds, { padding: [50, 50] });
+          }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    // Initial load
+    updateLocations();
+    setInterval(updateLocations, 5000);
+
+    // Add pulse animation
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.3); }
+      }
+      .leaflet-popup-content-wrapper {
+        font-family: inherit;
+      }
+    `;
+    document.head.appendChild(style);
+  });
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/js/all.min.js"></script>
+{% endblock %}
