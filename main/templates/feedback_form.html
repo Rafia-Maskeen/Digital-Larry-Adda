@@ -189,55 +189,152 @@
   <div class="feedback-form-wrapper">
     <h2><i class="fas fa-star"></i> Feedback for {{ route }}</h2>
 
-    <form id="feedbackForm">
-      {% csrf_token %}
-      <input type="hidden" name="route_id" value="{{ route.id }}">
-      <div class="form-group">
-        <label class="form-label">Type</label>
-        <select class="form-control" name="type" required>
-          <option value="">Select Type</option>
-          <option value="feedback">General Feedback</option>
-          <option value="issue">Report Issue</option>
-          <option value="suggestion">Suggestion</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Subject</label>
-        <input type="text" class="form-control" name="subject" placeholder="Brief title" required>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Message</label>
-        <textarea class="form-control" name="message" placeholder="Share your experience..." required></textarea>
-      </div>
-      <button type="submit" class="btn-submit">Submit Feedback</button>
-      <div class="success-message" id="feedbackSuccess">
-        Thank you! Your feedback has been submitted.
-      </div>
-    </form>
+<form id="feedbackForm">
+  {% csrf_token %}
+
+  <!-- Type Selector -->
+  <div class="form-group">
+    <label class="form-label">Type</label>
+    <select class="form-control" name="type" id="typeSelect" required>
+      <option value="">Select Type</option>
+      <option value="feedback">General Feedback</option>
+      <option value="issue">Report Issue</option>
+      <option value="suggestion">Suggestion</option>
+    </select>
+  </div>
+
+  <!-- Subject -->
+  <div class="form-group">
+    <label class="form-label">Subject</label>
+    <input type="text" class="form-control" name="subject" placeholder="Brief title" required>
+  </div>
+
+  <!-- Message -->
+  <div class="form-group">
+    <label class="form-label">Message</label>
+    <textarea class="form-control" name="message" placeholder="Share your experience..." required></textarea>
+  </div>
+
+  <!-- Hidden extra fields -->
+  <div id="routeField" class="form-group" style="display:none;">
+    <label class="form-label">Select Route</label>
+    <select class="form-control" name="route_id">
+      <option value="">Select Route</option>
+      {% for r in routes %}
+      <option value="{{ r.id }}">{{ r.start_location }} → {{ r.end_location }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div id="bookingField" class="form-group" style="display:none;">
+    <label class="form-label">Select Booking</label>
+    <select class="form-control" name="booking_id">
+      <option value="">Select Booking</option>
+      {% for b in bookings %}
+      <option value="{{ b.id }}">Booking #{{ b.id }} — {{ b.route.start_location }} → {{ b.route.end_location }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <!-- Submit -->
+  <button type="submit" class="btn-submit">Submit</button>
+  <div class="success-message" id="feedbackSuccess">
+    Thank you! Your feedback has been submitted.
+  </div>
+</form>
+
   </div>
 </section>
 
 <script>
-  document.getElementById('feedbackForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const formData = new FormData(this);
-
-    fetch('{% url "submit_feedback" route.id %}', {
-      method: 'POST',
-      body: formData,
-      headers: { 'X-CSRFToken': '{{ csrf_token }}' }
-    })
-    .then(r => r.json())
-    .then(data => {
-      if (data.success) {
-        document.querySelector('.btn-submit').style.display = 'none';
-        document.getElementById('feedbackSuccess').style.display = 'block';
-        setTimeout(() => window.location.href = '{% url "route_detail" route.id %}', 2000);
-      } else {
-        alert('Error: ' + (data.error || 'Submission failed'));
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
       }
-    })
-    .catch(() => alert('Network error.'));
+    }
+  }
+  return cookieValue;
+}
+const csrftoken = getCookie('csrftoken');
+
+const typeSelect = document.getElementById('typeSelect');
+const routeField = document.getElementById('routeField');
+const bookingField = document.getElementById('bookingField');
+const routeSelect = routeField.querySelector('select');
+const bookingSelect = bookingField.querySelector('select');
+
+// Hide optional fields initially
+routeField.style.display = 'none';
+bookingField.style.display = 'none';
+routeSelect.removeAttribute('required');
+bookingSelect.removeAttribute('required');
+
+typeSelect.addEventListener('change', function() {
+  const value = this.value;
+
+  // Reset all
+  routeField.style.display = 'none';
+  bookingField.style.display = 'none';
+  routeSelect.removeAttribute('required');
+  bookingSelect.removeAttribute('required');
+
+  // Enable and show only needed fields
+  if (value === 'feedback') {
+    routeField.style.display = 'block';
+    routeSelect.setAttribute('required', 'required');
+  } 
+  else if (value === 'issue') {
+    routeField.style.display = 'block';
+    bookingField.style.display = 'block';
+    routeSelect.setAttribute('required', 'required');
+    bookingSelect.setAttribute('required', 'required');
+  } 
+  else if (value === 'suggestion') {
+    // Only message and subject remain visible
+    // All others hidden
+  }
+});
+
+// === Form Submission ===
+document.getElementById('feedbackForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const formData = new FormData(this);
+
+  fetch("{% url 'submit_feedback_global' %}", {
+    method: "POST",
+    headers: { 
+      "X-CSRFToken": csrftoken,
+      "X-Requested-With": "XMLHttpRequest" 
+    },
+    body: formData,
+  })
+  .then(response => {
+    if (!response.ok) throw new Error("HTTP " + response.status);
+    return response.json();
+  })
+  .then(data => {
+    if (data.success) {
+      document.querySelector('.btn-submit').style.display = 'none';
+      document.getElementById('feedbackSuccess').style.display = 'block';
+      setTimeout(() => window.location.reload(), 1500);
+    } else {
+      alert("Error: " + (data.error || "Submission failed"));
+    }
+  })
+  .catch(err => {
+    console.error(err);
+    alert("Network/server error — check console for details.");
   });
+});
 </script>
+
+
+
+
 {% endblock %}

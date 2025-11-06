@@ -236,7 +236,7 @@
             {{ field.label_tag }}
             {{ field }}
             {% if field.errors %}
-              <small class="text-danger">{{ field.errors|join:", " }}</small>
+            <small class="text-danger">{{ field.errors|join:", " }}</small>
             {% endif %}
           </div>
         {% endif %}
@@ -263,7 +263,7 @@
       </div>
 
       <div class="fare-display">
-        <strong>Total Fare:</strong> <span id="selected-fare">Select a seat</span>
+        <strong>Total Fare:</strong> <span id="selected-fare">  Select a seat</span>
       </div>
 
       <button type="submit" class="btn-golden" id="submit-btn" disabled>Confirm & Pay</button>
@@ -283,7 +283,9 @@ document.addEventListener('DOMContentLoaded', function() {
   const aiRecommend = document.getElementById('ai-recommend');
   const bestSeatSpan = document.getElementById('best-seat');
   const bestFareSpan = document.getElementById('best-fare');
+  const fareInput = document.getElementById('id_fare'); // Django form field (if present)
 
+  const baseFare = parseFloat('{{ route.fare|floatformat:"2" }}'); // base route fare from backend
   let bestValue = Infinity;
   let bestSeatOption = null;
 
@@ -291,21 +293,34 @@ document.addEventListener('DOMContentLoaded', function() {
   seatSelect.querySelectorAll('option').forEach(option => {
     if (option.value && !option.disabled) {
       const fare = parseFloat(option.dataset.fare);
-      if (fare < bestValue) {
+      if (!isNaN(fare) && fare < bestValue) {
         bestValue = fare;
         bestSeatOption = option;
       }
     }
   });
 
-  // Update fare on selection
+  // Function to update fare display
+  function updateFare(selectedOption) {
+    const seatFare = parseFloat(selectedOption.dataset.fare);
+    if (!isNaN(seatFare)) {
+      const total = baseFare + seatFare;
+      fareDisplay.textContent = `Base: Rs. ${baseFare.toFixed(2)} + Seat: Rs. ${seatFare.toFixed(2)} = Rs. ${total.toFixed(2)}`;
+      if (fareInput) fareInput.value = total.toFixed(2); // Update form field
+      submitBtn.disabled = false;
+      aiRecommend.style.display = 'none';
+    } else {
+      fareDisplay.textContent = 'Select a seat';
+      if (fareInput) fareInput.value = '';
+      submitBtn.disabled = true;
+    }
+  }
+
+  // Update fare when a seat is selected
   seatSelect.addEventListener('change', function() {
     const selectedOption = this.options[this.selectedIndex];
     if (selectedOption.value) {
-      const fare = selectedOption.dataset.fare;
-      fareDisplay.textContent = `Rs. ${parseFloat(fare).toFixed(2)}`;
-      submitBtn.disabled = false;
-      aiRecommend.style.display = 'none';
+      updateFare(selectedOption);
     } else {
       fareDisplay.textContent = 'Select a seat';
       submitBtn.disabled = true;
@@ -314,12 +329,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Show AI recommendation
   if (bestSeatOption) {
-    const seatNum = bestSeatOption.textContent.split(' - ')[0];
+    const seatNum = bestSeatOption.textContent.split(' - ')[0].trim();
     bestSeatSpan.textContent = seatNum;
     bestFareSpan.textContent = bestValue.toFixed(2);
     aiRecommend.style.display = 'block';
 
-    // Auto-select after 3 seconds
+    // Auto-select best seat after 3 seconds (optional)
     setTimeout(() => {
       if (!seatSelect.value && bestSeatOption) {
         seatSelect.value = bestSeatOption.value;
@@ -328,7 +343,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 3000);
   }
 
-  // Form submit
+  // Initialize fare if already selected (e.g., returning to page)
+  if (seatSelect.value) {
+    const selectedOption = seatSelect.options[seatSelect.selectedIndex];
+    updateFare(selectedOption);
+  }
+
+  // Prevent form submit without seat
   document.getElementById('booking-form').addEventListener('submit', function(e) {
     if (!seatSelect.value) {
       e.preventDefault();
@@ -347,6 +368,7 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 </script>
+
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/js/all.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>

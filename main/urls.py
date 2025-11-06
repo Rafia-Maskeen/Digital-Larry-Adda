@@ -16,16 +16,21 @@ urlpatterns = [
     path('logout/', views.logout_view, name='logout'),
     path('routes/', views.all_routes_with_vehicles, name='route_list'),
     path('routes/<int:route_id>/', views.route_detail, name='route_detail'),
-    path('feedback/submit/', views.submit_feedback, name='submit_feedback_global'),
     path('feedback/<int:route_id>/', views.submit_feedback, name='submit_feedback'),
+    path('feedback/submit/', views.submit_feedback_global, name='submit_feedback_global'),
+
     
     # Issue
     path('issue/', views.submit_issue, name='submit_issue'),
-    path('ai-assistant/', views.ai_assistant, name='ai_assistant'),
     path('manager-dashboard/', views.manager_dashboard, name='manager_dashboard'),
     path('add-vehicle/', views.add_update_vehicle, name='add_vehicle'),
     path('update-vehicle/<int:pk>/', views.add_update_vehicle, name='update_vehicle'),
     path('monitor-map/', views.monitor_map, name='monitor_map'),
     path('vehicle-locations/', views.vehicle_locations_json, name='vehicle_locations_json'),
     path('assign-route/', views.assign_route, name='assign_route'),
+    path('api/transport-data/', views.transport_data_api, name='transport_data_api'),
+    path('chatbot/', views.chatbot_view, name='chatbot'),
+    path("api/routes/", views.get_user_routes, name="get_user_routes"),
+    path("api/bookings/", views.get_user_bookings, name="get_user_bookings"),
+
 ]

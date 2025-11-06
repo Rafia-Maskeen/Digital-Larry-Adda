@@ -1,0 +1,30 @@
+{
+  "vehicles": [
+    {
+      "id": 1,
+      "name": "Toyota Hiace",
+      "available_seats": 19
+    },
+    {
+      "id": 2,
+      "name": "Ford Endeavour",
+      "available_seats": 19
+    },
+    {
+      "id": 3,
+      "name": "Hyundai Verna",
+      "available_seats": 20
+    },
+    {
+      "id": 4,
+      "name": "Toyota",
+      "available_seats": 19
+    },
+    {
+      "id": 5,
+      "name": "BMW",
+      "available_seats": 20
+    }
+  ],
+  "routes": []
+}

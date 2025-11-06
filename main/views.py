@@ -1,3 +1,4 @@
+import re
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout
 from django.contrib import messages
@@ -10,9 +11,11 @@ from django.http import JsonResponse
 from datetime import timedelta
 from django.utils import timezone
 import openai
+import json
+from .assistant_engine import handle_transport_query
 from django.conf import settings
-from .models import AIInteraction, Vehicle, Route, Seat, Booking, Feedback, Issue, VehicleLocation, CustomUser
-from .forms import CustomLoginForm, CustomRegisterForm, BookingForm, FeedbackForm, IssueForm, VehicleForm, RouteForm
+from .models import AIInteraction, Vehicle, Route, Seat, Booking, Feedback, Issue, VehicleLocation
+from .forms import CustomLoginForm, CustomRegisterForm, BookingForm,  VehicleForm, RouteForm
 
 def home(request):
     return render(request, 'index.html')
@@ -126,76 +129,131 @@ def route_detail(request, route_id):
     return render(request, 'route_detail.html', context)
 
 @login_required
-def submit_feedback(request, route_id=None):
-    if request.method != 'POST':
-        return JsonResponse({'success': False, 'error': 'Invalid method'})
-
-    # Only passengers can submit
-    if not request.user.groups.filter(name='Passenger').exists():
-        return JsonResponse({'success': False, 'error': 'Permission denied'})
-
-    route = None
-    if route_id:
+def submit_feedback(request, route_id):
+    if request.method == 'POST':
         route = get_object_or_404(Route, id=route_id)
 
-    Feedback.objects.create(
-        user=request.user,
-        route=route,
-        type=request.POST.get('type'),
-        subject=request.POST.get('subject'),
-        message=request.POST.get('message')
-    )
-    return JsonResponse({'success': True})
+        # Only passengers can submit
+        if not request.user.groups.filter(name='Passenger').exists():
+            return JsonResponse({'success': False, 'error': 'Permission denied'})
+
+        # Map frontend fields to backend model
+        feedback_type = request.POST.get('type')
+        subject = request.POST.get('subject')
+        message = request.POST.get('message')
+
+        # Convert "type" field into appropriate model saving:
+        if feedback_type == 'issue':
+            # Create an Issue entry instead
+            Issue.objects.create(
+                user=request.user,
+                route=route,
+                description=f"[{subject}] {message}"
+            )
+        else:
+            # Create a Feedback entry
+            Feedback.objects.create(
+                user=request.user,
+                route=route,
+                rating=5,  # Default rating if not provided in form
+                comment=f"({feedback_type.upper()}) {subject} - {message}"
+            )
+
+        return JsonResponse({'success': True})
+    
+    return JsonResponse({'success': False, 'error': 'Invalid request'})
+
 
 @login_required
 def submit_issue(request):
     if request.method == 'POST':
-        # Save issue logic
+        description = request.POST.get('description')
+        route_id = request.POST.get('route_id')
+        booking_id = request.POST.get('booking_id')
+
+        route = Route.objects.filter(id=route_id).first()
+        booking = Booking.objects.filter(id=booking_id).first()
+
+        Issue.objects.create(
+            user=request.user,
+            route=route,
+            booking=booking,
+            description=description
+        )
         return JsonResponse({'success': True})
-    return JsonResponse({'success': False, 'error': 'Invalid'})
+    return JsonResponse({'success': False, 'error': 'Invalid method'})
 
 @login_required
-def submit_feedback(request, route_id=None):
-    if request.method == 'POST' and request.user.groups.filter(name='Passenger').exists():
-        # Save feedback
-        return JsonResponse({'success': True})
-    return JsonResponse({'success': False, 'error': 'Invalid'})
+def submit_feedback_global(request):
+    if request.method == "POST":
+        feedback_type = request.POST.get("type")
+        subject = request.POST.get("subject")
+        message = request.POST.get("message")
+        route_id = request.POST.get("route_id")
+        booking_id = request.POST.get("booking_id")
+
+        route = None
+        booking = None
+
+        # Fetch related objects safely
+        if route_id:
+            try:
+                route = Route.objects.get(id=int(route_id))
+            except (Route.DoesNotExist, ValueError):
+                route = None
+
+        if booking_id:
+            try:
+                booking = Booking.objects.get(id=int(booking_id))
+            except (Booking.DoesNotExist, ValueError):
+                booking = None
+
+        # ✅ Handle different types
+        if feedback_type == "feedback" or feedback_type == "suggestion":
+            Feedback.objects.create(
+                user=request.user,
+                route=route,
+                rating=5,  # default if you’re not collecting rating in the modal
+                comment=f"{subject}\n\n{message}"
+            )
+        elif feedback_type == "issue":
+            Issue.objects.create(
+                user=request.user,
+                route=route,
+                booking=booking,
+                description=f"{subject}\n\n{message}"
+            )
+        else:
+            return JsonResponse({"success": False, "error": "Invalid feedback type."}, status=400)
+
+        return JsonResponse({"success": True})
+
+    return JsonResponse({"success": False, "error": "Invalid request method."}, status=405)
+
+
+
+
 
 def ai_assistant(request):
-    question = request.GET.get('question')
-    response = ""
-    if question:
-        ai_interaction = AIInteraction.objects.create(
-            user=request.user if request.user.is_authenticated else None,
-            question=question,
-            response=""
-        )
-        if "next bus" in question.lower():
-            next_route = Route.objects.filter(departure_time__gt=timezone.now()).order_by('departure_time').first()
-            if next_route:
-                response = f"The next bus to {next_route.end_location} is at {next_route.departure_time}."
-            else:
-                response = "No upcoming buses found."
-        else:
-            if settings.OPENAI_API_KEY:
-                openai.api_key = settings.OPENAI_API_KEY
-                try:
-                    completion = openai.ChatCompletion.create(
-                        model="gpt-3.5-turbo",
-                        messages=[
-                            {"role": "system", "content": "You are a helpful transport assistant for Digital Larry Adda. Answer questions about buses, routes, bookings."},
-                            {"role": "user", "content": question}
-                        ],
-                        max_tokens=150
-                    )
-                    response = completion.choices[0].message.content.strip()
-                except Exception as e:
-                    response = f"Sorry, I couldn't process that. (Error: {str(e)})"
-            else:
-                response = "AI mode not configured. Try asking 'When is the next bus?'"
-        ai_interaction.response = response
-        ai_interaction.save()
-    return render(request, 'ai_assistant.html', {'response': response, 'question': question})
+    if request.method != 'POST':
+        return JsonResponse({'response': 'Please send your question via POST request.'}, status=405)
+
+    try:
+        data = json.loads(request.body.decode('utf-8') or '{}')
+        question = data.get('question', '').strip()
+    except Exception:
+        question = request.POST.get('question', '').strip()
+
+    if not question:
+        return JsonResponse({'response': "Please ask a question about routes, vehicles, or fares."})
+
+    try:
+        answer = handle_transport_query(question)
+        return JsonResponse({'response': answer})
+    except Exception as e:
+        return JsonResponse({
+            'response': f"⚠️ Sorry, something went wrong while processing your request ({str(e)})."
+        })
 
 @login_required
 def manager_dashboard(request):
@@ -288,3 +346,68 @@ def available_vehicles(request):
         'dropoff': dropoff,
     }
     return render(request, 'available_vehicles.html', context)
+
+
+def transport_data_api(request):
+    routes = Route.objects.select_related('vehicle').filter(
+        departure_time__gt=timezone.now()
+    ).order_by('departure_time')
+    
+    data = {
+        'vehicles': [],
+        'routes': [],
+    }
+
+    for vehicle in Vehicle.objects.all():
+        available_seats = Seat.objects.filter(
+            vehicle=vehicle, is_available=True
+        ).count()
+        data['vehicles'].append({
+            'id': vehicle.id,
+            'name': vehicle.name,
+            'type': vehicle.vehicle_type,
+            'available_seats': available_seats,
+        })
+
+    for route in routes:
+        available_seats = Seat.objects.filter(
+            vehicle=route.vehicle, is_available=True
+        ).count()
+        data['routes'].append({
+            'id': route.id,
+            'start_location': route.start_location,
+            'end_location': route.end_location,
+            'departure_time': str(route.departure_time),
+            'arrival_time': str(route.arrival_time),
+            'vehicle_name': route.vehicle.name,
+            'available_seats': available_seats,
+            'vip_seats': route.vip_seats,
+            'std_seats': route.std_seats,
+        })
+
+    return JsonResponse(data)
+
+# views.py
+def chatbot_view(request):
+    return render(request, 'chatbot.html')
+
+@login_required
+def get_user_routes(request):
+    routes = Route.objects.filter(booking__user=request.user).distinct()
+    data = [
+        {"id": r.id, "name": f"{r.start_location} → {r.end_location}"}
+        for r in routes
+    ]
+    return JsonResponse({"routes": data})
+
+@login_required
+def get_user_bookings(request):
+    bookings = Booking.objects.filter(user=request.user).select_related('route', 'seat')
+    data = [
+        {
+            "id": b.id,
+            "name": f"{b} ({b.seat.seat_type} - Rs.{b.seat.fare})"
+        }
+        for b in bookings
+    ]
+    return JsonResponse({"bookings": data})

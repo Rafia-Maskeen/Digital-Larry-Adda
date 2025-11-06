@@ -83,7 +83,7 @@ class Booking(models.Model):
 
 class Feedback(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    route = models.ForeignKey(Route, on_delete=models.CASCADE)
+    route = models.ForeignKey(Route, on_delete=models.CASCADE, null=True, blank=True)  # ✅ allow null
     rating = models.IntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(5)],
         help_text="Rate from 1 (poor) to 5 (excellent)"
@@ -92,10 +92,8 @@ class Feedback(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Feedback by {self.user} for {self.route} - Rating: {self.rating}"
+        return f"Feedback by {self.user} for {self.route or 'General'} - Rating: {self.rating}"
 
-    class Meta:
-        unique_together = ['user', 'route']
 
 class Issue(models.Model):
     STATUS_CHOICES = [
