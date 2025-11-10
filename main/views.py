@@ -234,6 +234,7 @@ def submit_feedback_global(request):
 
 
 
+@login_required
 def ai_assistant(request):
     if request.method != 'POST':
         return JsonResponse({'response': 'Please send your question via POST request.'}, status=405)
@@ -248,11 +249,20 @@ def ai_assistant(request):
         return JsonResponse({'response': "Please ask a question about routes, vehicles, or fares."})
 
     try:
+        # 👇 Call your logic function
         answer = handle_transport_query(question)
+
+        # 💾 Log the chat
+        AIInteraction.objects.create(
+            user=request.user,
+            question=question,
+            response=answer
+        )
+
         return JsonResponse({'response': answer})
     except Exception as e:
         return JsonResponse({
-            'response': f"⚠️ Sorry, something went wrong while processing your request ({str(e)})."
+            'response': f"⚠️ Sorry, something went wrong: {str(e)}"
         })
 
 @login_required

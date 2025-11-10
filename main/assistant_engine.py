@@ -1,305 +1,251 @@
-import re
-from datetime import datetime, timedelta
-from difflib import SequenceMatcher
+import difflib
+from datetime import timedelta
 from django.utils import timezone
-from .models import Vehicle, Route, Seat, Booking
+from .models import Vehicle, Route, Seat, Booking, VehicleLocation
 
 
-def format_datetime(dt):
-    return dt.strftime('%a, %d %b %Y, %I:%M %p')
-
-
-def seats_left(route):
-    total = Seat.objects.filter(vehicle=route.vehicle).count()
-    booked = Booking.objects.filter(route=route).count()
-    return max(0, total - booked)
-
-
-def is_greeting(text: str) -> bool:
-    """
-    Return True only if the message looks like a greeting,
-    not a real question.
-    """
-    text = text.strip().lower()
-    greetings = {"hi", "hello", "hey", "hy", "salam"}
-    return text in greetings or text.startswith(("good morning", "good evening"))
-
-
-def similarity(a, b):
-    return SequenceMatcher(None, a, b).ratio()
-
-
-def detect_day_range(question: str):
-    """Detect if user mentioned a day (today, tomorrow, tonight, morning, evening)."""
-    now = timezone.now()
-    tomorrow = now + timedelta(days=1)
+def handle_transport_query(question: str):
     q = question.lower().strip()
+    q = q.replace("tomorow", "tomorrow")
+    greet = get_greeting_response(q)
+    if greet:
+        return greet
+    # ✅ If the user mentions "vehicle(s)", prefer vehicle intent even if "available" is present
+    if any(k in q for k in ["vehicle", "vehicles", "bus list", "buses"]):
+        return get_vehicle_info(q)
 
-    # Default = next 7 days
-    start = now
-    end = now + timedelta(days=7)
+    if any(k in q for k in ["fare", "price", "cost", "ticket"]):
+        return get_fare_info(q)
 
-    if "today" in q:
-        start = now.replace(hour=0, minute=0, second=0)
-        end = now.replace(hour=23, minute=59, second=59)
-    elif any(word in q for word in ["tomorrow", "tomottow", "tommorow"]):
-        start = tomorrow.replace(hour=0, minute=0, second=0)
-        end = tomorrow.replace(hour=23, minute=59, second=59)
-    elif any(word in q for word in ["tonight", "evening"]):
-        start = now.replace(hour=18, minute=0, second=0)
-        end = now.replace(hour=23, minute=59, second=59)
-    elif "morning" in q:
-        start = now.replace(hour=6, minute=0, second=0)
-        end = now.replace(hour=12, minute=0, second=0)
+    if any(k in q for k in ["time", "timing", "schedule", "when", "next bus"]):
+        return get_route_timing(q)
 
-    return start, end
+    # Seats intent AFTER vehicle intent, so "available vehicles" doesn’t get misrouted
+    if any(k in q for k in ["seat", "available", "availability", "how many"]):
+        return get_seat_info(q)
+
+    if any(k in q for k in ["route", "routes", "bus", "travel", "go to"]):
+        return get_routes_info(q)
+
+    if any(k in q for k in ["location", "where"]):
+        return get_vehicle_location_info(q)
+
+    if any(k in q for k in ["booking", "bookings"]):
+        return get_booking_info(q)
+
+    return "🤖 Could you clarify? Try: 'available vehicles', 'fare Kotli to Mirpur', or 'routes for tomorrow'."
+
+# ------------------------ HELPERS ------------------------
+
+def find_city_pair(q, routes):
+    """Return (start, end) if cities appear in query, even partially."""
+    cities = {r.start_location.lower() for r in routes} | {r.end_location.lower() for r in routes}
+    words = q.split()
+    found = []
+    for w in words:
+        match = difflib.get_close_matches(w, cities, n=1, cutoff=0.7)
+        if match:
+            found.append(match[0])
+    if len(found) >= 2:
+        return found[0], found[1]
+    elif len(found) == 1:
+        return found[0], None
+    return None, None
 
 
-def handle_transport_query(question: str) -> str:
-    question = question.strip().lower()
-    if not question:
-        return (
-            "Please type a question — for example:\n"
-            "• Next bus\n• Available routes\n• Fare from Lahore to Islamabad"
-        )
+def get_routes_info(q):
+    routes = Route.objects.select_related('vehicle').order_by('departure_time')
+    if not routes.exists():
+        return "No routes have been added yet."
 
-    now = timezone.now()
-    routes = Route.objects.select_related('vehicle').filter(departure_time__gte=now).order_by('departure_time')
+    start_city, end_city = find_city_pair(q, routes)
+
+    # Tomorrow filter
+    if "tomorrow" in q:
+        tomorrow = timezone.now().date() + timedelta(days=1)
+        tomorrow_routes = routes.filter(departure_time__date=tomorrow)
+        if tomorrow_routes.exists():
+            msg = ["🗓️ Routes scheduled for tomorrow:"]
+            for r in tomorrow_routes:
+                msg.append(f"- {r.start_location} → {r.end_location} ({r.vehicle.name}) at {r.departure_time.strftime('%H:%M')} | Rs.{r.fare}")
+            return "\n".join(msg)
+        # fallback to next available
+        upcoming = routes.filter(departure_time__gt=timezone.now())[:3]
+        if upcoming.exists():
+            msg = ["🕒 No routes exactly tomorrow, but here are the next ones:"]
+            for r in upcoming:
+                msg.append(f"- {r.start_location} → {r.end_location} ({r.vehicle.name}) at {r.departure_time.strftime('%d %b %H:%M')}")
+            return "\n".join(msg)
+        return "No upcoming routes found."
+
+    # If user mentioned cities
+    if start_city:
+        qs = routes.filter(start_location__icontains=start_city)
+        if end_city:
+            qs = qs.filter(end_location__icontains=end_city)
+            if not qs.exists():
+                qs = routes.filter(start_location__icontains=end_city, end_location__icontains=start_city)
+        if qs.exists():
+            msg = [f"🚌 Routes involving {start_city.title()}" + (f" and {end_city.title()}:" if end_city else ":")]
+            for r in qs:
+                msg.append(f"- {r.start_location} → {r.end_location} | {r.vehicle.name} at {r.departure_time.strftime('%Y-%m-%d %H:%M')} | Rs.{r.fare}")
+            return "\n".join(msg)
+        return f"No routes found near {start_city.title()}."
+
+    # General fallback
+    msg = ["🚍 Upcoming Routes:"]
+    for r in routes[:5]:
+        msg.append(f"- {r.start_location} → {r.end_location} ({r.vehicle.name}) at {r.departure_time.strftime('%Y-%m-%d %H:%M')}")
+    return "\n".join(msg)
+
+
+def get_route_timing(q):
+    """Return timing for a route between two cities."""
+    routes = Route.objects.select_related('vehicle')
+    start, end = find_city_pair(q, routes)
+    if not start or not end:
+        # fallback to next route
+        upcoming = routes.filter(departure_time__gt=timezone.now()).order_by('departure_time')[:3]
+        if not upcoming.exists():
+            return "No routes scheduled yet."
+        msg = ["🕒 Next scheduled routes:"]
+        for r in upcoming:
+            msg.append(f"- {r.start_location} → {r.end_location} ({r.vehicle.name}) at {r.departure_time.strftime('%Y-%m-%d %H:%M')}")
+        return "\n".join(msg)
+
+    qs = routes.filter(start_location__icontains=start, end_location__icontains=end)
+    if not qs.exists():
+        qs = routes.filter(start_location__icontains=end, end_location__icontains=start)
+    if not qs.exists():
+        return f"No routes found between {start.title()} and {end.title()}."
+    msg = [f"🕒 Timings for {start.title()} → {end.title()}:"]
+    for r in qs:
+        msg.append(f"- {r.vehicle.name} departs {r.departure_time.strftime('%Y-%m-%d %H:%M')} | Rs.{r.fare}")
+    return "\n".join(msg)
+
+
+def get_fare_info(q):
+    routes = Route.objects.select_related('vehicle')
+    start, end = find_city_pair(q, routes)
+    if not start or not end:
+        return "Please mention both cities (e.g. 'fare from Kotli to Mirpur')."
+
+    qs = routes.filter(start_location__icontains=start, end_location__icontains=end)
+    if not qs.exists():
+        qs = routes.filter(start_location__icontains=end, end_location__icontains=start)
+    if not qs.exists():
+        return f"No fare data found between {start.title()} and {end.title()}."
+
+    msg = [f"💰 Fare between {start.title()} and {end.title()}:"]
+    for r in qs:
+        msg.append(f"- {r.vehicle.name}: Rs.{r.fare}")
+    return "\n".join(msg)
+
+
+def get_seat_info(q):
+    routes = Route.objects.select_related('vehicle')
+    start, end = find_city_pair(q, routes)
+    if start and end:
+        route = routes.filter(start_location__icontains=start, end_location__icontains=end).first()
+        if not route:
+            route = routes.filter(start_location__icontains=end, end_location__icontains=start).first()
+        if not route:
+            return f"No route found between {start.title()} and {end.title()}."
+        total = Seat.objects.filter(vehicle=route.vehicle).count()
+        available = Seat.objects.filter(vehicle=route.vehicle, is_available=True).count()
+        return f"💺 {available} out of {total} seats available on {route.vehicle.name} for the {start.title()} → {end.title()} route."
+
+    available = Seat.objects.filter(is_available=True).select_related('vehicle')
+    if not available.exists():
+        return "No seats available right now."
+    msg = ["💺 Available seats:"]
+    for s in available[:10]:
+        msg.append(f"- {s.vehicle.name}: {s.seat_number} ({s.get_seat_type_display()}) — Rs.{s.fare}")
+    return "\n".join(msg)
+
+
+from .models import Vehicle, Seat  # ensure Seat is imported
+
+def get_vehicle_info(q):
     vehicles = Vehicle.objects.all()
 
-    # 1️⃣ Greetings
-    if is_greeting(question):
+    # filter by status if asked
+    if "active" in q:
+        vehicles = vehicles.filter(status="Active")
+    elif "broken" in q:
+        vehicles = vehicles.filter(status="Broken")
+
+    # ✅ special case: "available vehicles" -> only vehicles with >0 available seats
+    if "available" in q:
+        result = []
+        for v in vehicles:
+            avail = Seat.objects.filter(vehicle=v, is_available=True).count()
+            if avail > 0:
+                result.append((v, avail))
+
+        if not result:
+            return "No vehicles with available seats right now."
+
+        lines = ["🚗 Vehicles with available seats:"]
+        for v, avail in result[:10]:
+            lines.append(f"- {v.name} ({v.number_plate}) — {avail} seats available · Status: {v.status}")
+        return "\n".join(lines)
+
+    # default listing
+    if not vehicles.exists():
+        return "No vehicles found."
+
+    lines = ["🚗 Vehicles:"]
+    for v in vehicles[:10]:
+        lines.append(f"- {v.name} ({v.number_plate}) — Status: {v.status}, Driver: {v.driver or 'Unassigned'}")
+    return "\n".join(lines)
+
+
+
+def get_booking_info(q):
+    bookings = Booking.objects.select_related('user', 'route', 'seat').order_by('-id')
+    if not bookings.exists():
+        return "No bookings yet."
+    msg = ["📘 Recent bookings:"]
+    for b in bookings[:5]:
+        msg.append(f"- {b.user.username}: {b.route.start_location} → {b.route.end_location} | {b.seat.seat_number} ({b.seat.get_seat_type_display()}) - {b.status}")
+    return "\n".join(msg)
+
+
+def get_vehicle_location_info(q):
+    locs = VehicleLocation.objects.select_related('vehicle')
+    if not locs.exists():
+        return "No location data available."
+    msg = ["📍 Latest vehicle locations:"]
+    for l in locs[:5]:
+        msg.append(f"- {l.vehicle.name}: ({l.latitude:.3f}, {l.longitude:.3f}) updated {l.timestamp.strftime('%H:%M')}")
+    return "\n".join(msg)
+
+def get_greeting_response(q):
+    """Respond nicely to greetings or casual chat."""
+    greetings = ["hi", "hello", "hey", "salam", "good morning", "good evening", "good afternoon"]
+    if any(g in q for g in greetings):
         return (
-            "Hello! 👋 I'm your transport assistant.\n\n"
-            "You can ask things like:\n"
+            "👋 Hello there! I'm your AI Transport Assistant.\n\n"
+            "You can ask me things like:\n"
             "• Next bus\n"
             "• Available vehicles\n"
-            "• Bus to Islamabad\n"
-            "• Lahore to Karachi route\n"
-            "• Fare from Lahore to Islamabad\n"
-            "• Routes for tomorrow or tonight\n"
-            "• Seats from Kotli to Mirpur"
+            "• Fare from Kotli to Mirpur\n"
+            "• Seats available for tomorrow\n"
+            "• Vehicle locations\n"
         )
 
-    # 2️⃣ Date-based route questions
-    if any(word in question for word in ["today", "tomorrow", "tomottow", "tommorow", "tonight", "morning", "evening"]):
-        start, end = detect_day_range(question)
-        matching_routes = Route.objects.filter(departure_time__range=(start, end)).order_by('departure_time')
+    if "how are you" in q:
+        return "🤖 I'm just a bunch of code, but I'm running smoothly! How can I assist you today?"
 
-        if matching_routes.exists():
-            msg_lines = []
-            for r in matching_routes[:5]:
-                msg_lines.append(
-                    f"🚌 {r.start_location} → {r.end_location} | {r.vehicle.name} | "
-                    f"{format_datetime(r.departure_time)} | Rs. {r.fare} | Seats: {seats_left(r)}"
-                )
-            readable_day = "tomorrow" if "tomorrow" in question or "tomottow" in question else "today"
-            return f"✅ Here are the routes scheduled for {readable_day.capitalize()}:\n" + "\n".join(msg_lines)
-        else:
-            readable_day = "tomorrow" if "tomorrow" in question or "tomottow" in question else "today"
-            return f"⚠️ No routes are currently scheduled for {readable_day.capitalize()}. Please check again later."
-
-    # 3️⃣ Fare-related intent
-    if any(word in question for word in ["fare", "price", "cost"]):
-        match = re.findall(r"[A-Z]?[a-z]+", question.title())
-        if len(match) >= 1:
-            city = match[-1]
-            matched_routes = routes.filter(start_location__icontains=city) | routes.filter(end_location__icontains=city)
-            if matched_routes.exists():
-                fares = [r.fare for r in matched_routes[:3]]
-                avg_fare = sum(fares) / len(fares)
-                return (
-                    f"The average base fare for routes involving **{city}** is around Rs. {avg_fare:.0f}.\n"
-                    f"Try asking more specifically, like *fare from {city} to Mirpur*."
-                )
-            return f"I couldn’t find any active routes related to **{city}**."
-        return "Please specify at least one location, for example *fare for Lahore to Islamabad*."
-
-    # 4️⃣ Next bus or route
-    if any(kw in question for kw in ["next bus", "next route", "next ride"]):
-        nxt = routes.first()
-        if nxt:
-            return (
-                f"🚌 The next route is **{nxt.start_location} → {nxt.end_location}**.\n"
-                f"Vehicle: {nxt.vehicle.name}\n"
-                f"Departure: {format_datetime(nxt.departure_time)}\n"
-                f"Base Fare: Rs. {nxt.fare}\n"
-                f"Seats Available: {seats_left(nxt)}"
-            )
-        return "No upcoming routes are scheduled right now."
-
-    # 5️⃣ Available vehicles
-    if any(kw in question for kw in ["available vehicles", "vehicles available", "show vehicles", "list vehicles"]):
-        vehicles_list = []
-        for v in vehicles:
-            count = Seat.objects.filter(vehicle=v, is_available=True).count()
-            vehicles_list.append(f"{v.name} — {count} seats available")
-        if vehicles_list:
-            return "🚍 Available vehicles:\n" + "\n".join(f"• {v}" for v in vehicles_list)
-        return "No vehicles are currently showing available seats."
-
-    # 6️⃣ Seat or route inquiries
-    if any(word in question for word in ["seat", "seats", "route", "bus"]):
-        words = re.findall(r"[A-Z]?[a-z]+", question.title())
-        if len(words) >= 2:
-            start_city, end_city = words[-2], words[-1]
-            matched = routes.filter(start_location__icontains=start_city, end_location__icontains=end_city)
-            if not matched.exists():
-                matched = routes.filter(start_location__icontains=end_city, end_location__icontains=start_city)
-            if matched.exists():
-                lines = []
-                for r in matched[:5]:
-                    lines.append(
-                        f"🚌 {r.start_location} → {r.end_location} | {r.vehicle.name} | "
-                        f"{format_datetime(r.departure_time)} | Rs. {r.fare} | Seats: {seats_left(r)}"
-                    )
-                return "Here are the matching routes:\n" + "\n".join(lines)
-            else:
-                return f"⚠️ No routes found for {start_city} to {end_city}."
-
-    # 7️⃣ Default fallback
-    return (
-        "Hello! 👋 I can help you with transport info.\n\n"
-        "Try asking things like:\n"
-        "• Next bus\n"
-        "• Available vehicles\n"
-        "• Bus to Islamabad\n"
-        "• Lahore to Karachi route\n"
-        "• Fare from Lahore to Islamabad\n"
-        "• Routes for tomorrow\n"
-        "• Seats from Kotli to Mirpur"
-    )
-def handle_transport_query(question: str) -> str:
-    question = question.strip().lower()
-    if not question:
+    if "who are you" in q or "what can you do" in q:
         return (
-            "Please type a question — for example:\n"
-            "• Next bus\n• Available routes\n• Fare from Lahore to Islamabad"
+            "🧠 I'm your transport assistant! I can help you with:\n"
+            "- Bus routes and schedules\n"
+            "- Seat availability\n"
+            "- Fare details\n"
+            "- Vehicle information\n"
+            "- Booking summaries"
         )
 
-    now = timezone.now()
-    routes = Route.objects.select_related('vehicle').filter(departure_time__gte=now).order_by('departure_time')
-    vehicles = Vehicle.objects.all()
-
-    # 1️⃣ Greetings
-    if is_greeting(question):
-        return (
-            "Hello! 👋 I'm your transport assistant.\n\n"
-            "You can ask things like:\n"
-            "• Next bus\n"
-            "• Available vehicles\n"
-            "• Bus to Islamabad\n"
-            "• Lahore to Karachi route\n"
-            "• Fare from Lahore to Islamabad\n"
-            "• Routes for tomorrow or tonight\n"
-            "• Seats from Kotli to Mirpur"
-        )
-
-    # 2️⃣ Date-based route questions
-    if any(word in question for word in ["today", "tomorrow", "tomottow", "tommorow", "tonight", "morning", "evening"]):
-        start, end = detect_day_range(question)
-        matching_routes = Route.objects.filter(departure_time__range=(start, end)).order_by('departure_time')
-
-        if matching_routes.exists():
-            msg_lines = []
-            for r in matching_routes[:5]:
-                msg_lines.append(
-                    f"🚌 {r.start_location} → {r.end_location} | {r.vehicle.name} | "
-                    f"{format_datetime(r.departure_time)} | Rs. {r.fare} | Seats: {seats_left(r)}"
-                )
-            readable_day = "tomorrow" if "tomorrow" in question or "tomottow" in question else "today"
-            return f"✅ Here are the routes scheduled for {readable_day.capitalize()}:\n" + "\n".join(msg_lines)
-        else:
-            readable_day = "tomorrow" if "tomorrow" in question or "tomottow" in question else "today"
-            return f"⚠️ No routes are currently scheduled for {readable_day.capitalize()}. Please check again later."
-
-    # 3️⃣ Fare-related intent
-    if any(word in question for word in ["fare", "price", "cost"]):
-        match = re.findall(r"[A-Z]?[a-z]+", question.title())
-        if len(match) >= 1:
-            city = match[-1]
-            matched_routes = routes.filter(start_location__icontains=city) | routes.filter(end_location__icontains=city)
-            if matched_routes.exists():
-                fares = [r.fare for r in matched_routes[:3]]
-                avg_fare = sum(fares) / len(fares)
-                return (
-                    f"The average base fare for routes involving **{city}** is around Rs. {avg_fare:.0f}.\n"
-                    f"Try asking more specifically, like *fare from {city} to Mirpur*."
-                )
-            return f"I couldn’t find any active routes related to **{city}**."
-        return "Please specify at least one location, for example *fare for Lahore to Islamabad*."
-
-    # 4️⃣ Next bus or route
-    if any(kw in question for kw in ["next bus", "next route", "next ride"]):
-        nxt = routes.first()
-        if nxt:
-            return (
-                f"🚌 The next route is **{nxt.start_location} → {nxt.end_location}**.\n"
-                f"Vehicle: {nxt.vehicle.name}\n"
-                f"Departure: {format_datetime(nxt.departure_time)}\n"
-                f"Base Fare: Rs. {nxt.fare}\n"
-                f"Seats Available: {seats_left(nxt)}"
-            )
-        return "No upcoming routes are scheduled right now."
-
-    # 5️⃣ Available vehicles
-    if any(kw in question for kw in ["available vehicles", "vehicles available", "show vehicles", "list vehicles"]):
-        vehicles_list = []
-        for v in vehicles:
-            count = Seat.objects.filter(vehicle=v, is_available=True).count()
-            vehicles_list.append(f"{v.name} — {count} seats available")
-        if vehicles_list:
-            return "🚍 Available vehicles:\n" + "\n".join(f"• {v}" for v in vehicles_list)
-        return "No vehicles are currently showing available seats."
-
-    # 6️⃣ Vehicle-specific questions
-    for v in vehicles:
-        if v.name.lower() in question:
-            count = Seat.objects.filter(vehicle=v, is_available=True).count()
-            total = Seat.objects.filter(vehicle=v).count()
-            route_list = Route.objects.filter(vehicle=v)
-            if route_list.exists():
-                r = route_list.first()
-                route_info = f"Currently assigned to route: {r.start_location} → {r.end_location}"
-            else:
-                route_info = "No active route assigned currently."
-
-            return (
-                f"🚐 Vehicle: **{v.name}**\n"
-                f"Status: {v.status}\n"
-                f"Total Seats: {total}\n"
-                f"Available Seats: {count}\n"
-                f"{route_info}"
-            )
-
-    # 7️⃣ Seat or route inquiries (default)
-    if any(word in question for word in ["seat", "seats", "route", "bus"]):
-        words = re.findall(r"[A-Z]?[a-z]+", question.title())
-        if len(words) >= 2:
-            start_city, end_city = words[-2], words[-1]
-            matched = routes.filter(start_location__icontains=start_city, end_location__icontains=end_city)
-            if not matched.exists():
-                matched = routes.filter(start_location__icontains=end_city, end_location__icontains=start_city)
-            if matched.exists():
-                lines = []
-                for r in matched[:5]:
-                    lines.append(
-                        f"🚌 {r.start_location} → {r.end_location} | {r.vehicle.name} | "
-                        f"{format_datetime(r.departure_time)} | Rs. {r.fare} | Seats: {seats_left(r)}"
-                    )
-                return "Here are the matching routes:\n" + "\n".join(lines)
-            else:
-                return f"⚠️ No routes found for {start_city} to {end_city}."
-
-    # 8️⃣ Default fallback
-    return (
-        "Hello! 👋 I can help you with transport info.\n\n"
-        "Try asking things like:\n"
-        "• Next bus\n"
-        "• Available vehicles\n"
-        "• Bus to Islamabad\n"
-        "• Lahore to Karachi route\n"
-        "• Fare from Lahore to Islamabad\n"
-        "• Routes for tomorrow\n"
-        "• Seats from Kotli to Mirpur"
-    )
+    return None
