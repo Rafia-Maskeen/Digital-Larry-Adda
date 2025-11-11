@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
-from .models import CustomUser, Booking, Seat, Route, Feedback, Issue, Vehicle
+from .models import CustomUser, Booking, Seat, Route, Feedback, Issue, Vehicle,VehicleLocation
 
 class CustomLoginForm(AuthenticationForm):
     username = forms.CharField(
@@ -18,6 +18,11 @@ class CustomLoginForm(AuthenticationForm):
         })
     )
 
+
+class SeatForm(forms.ModelForm):
+    class Meta:
+        model = Seat
+        fields = ["vehicle", "seat_number", "seat_type", "is_available"]
 class CustomRegisterForm(UserCreationForm):
     email = forms.EmailField(required=True, widget=forms.EmailInput(attrs={
         'class': 'form-control',
@@ -68,13 +73,38 @@ class RouteForm(forms.ModelForm):
         }
 
 class FeedbackForm(forms.ModelForm):
+    RATING_CHOICES = [
+        (1, '1 Star'),
+        (2, '2 Stars'),
+        (3, '3 Stars'),
+        (4, '4 Stars'),
+        (5, '5 Stars'),
+    ]
+
+    rating = forms.ChoiceField(
+        choices=RATING_CHOICES,
+        widget=forms.RadioSelect,
+        label="Rating",
+        required=True
+    )
+
     class Meta:
         model = Feedback
-        fields = ['rating', 'comment']
+        fields = ['route', 'comment', 'rating']
         widgets = {
-            'rating': forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'max': 5}),
-            'comment': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Enter your feedback'}),
+            'comment': forms.Textarea(attrs={'rows': 4}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['route'].queryset = Route.objects.all().order_by('start_location')
+        self.fields['route'].empty_label = "-- Select a Route --"
+        self.fields['route'].label = "Route"
+        self.fields['comment'].label = "Comment"
+
+    def clean_rating(self):
+        rating = self.cleaned_data['rating']
+        return int(rating)
 
 class IssueForm(forms.ModelForm):
     class Meta:
@@ -103,6 +133,15 @@ class VehicleForm(forms.ModelForm):
             'driver': forms.Select(attrs={'class': 'form-control'}),
             'manager': forms.Select(attrs={'class': 'form-control'}),
             'status': forms.Select(attrs={'class': 'form-control'}),
+        }
+
+class VehicleLocationForm(forms.ModelForm):
+    class Meta:
+        model = VehicleLocation
+        fields = ['latitude', 'longitude']
+        labels = {
+            'latitude': 'Vehicle Position (North/South)',
+            'longitude': 'Vehicle Position (East/West)',
         }
 
 class RouteForm(forms.ModelForm):

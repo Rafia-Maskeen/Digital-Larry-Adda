@@ -1,6 +1,6 @@
 import re
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import login, logout
+from django.contrib.auth import login, logout,authenticate
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group
@@ -12,33 +12,51 @@ from datetime import timedelta
 from django.utils import timezone
 import openai
 import json
+from django.core.serializers import serialize
+from django.db.models import F
 from .assistant_engine import handle_transport_query
 from django.conf import settings
 from .models import AIInteraction, Vehicle, Route, Seat, Booking, Feedback, Issue, VehicleLocation
-from .forms import CustomLoginForm, CustomRegisterForm, BookingForm,  VehicleForm, RouteForm
+from .forms import CustomLoginForm, CustomRegisterForm, BookingForm,  VehicleForm, RouteForm, SeatForm, VehicleLocationForm, FeedbackForm, IssueForm
 
 def home(request):
-    return render(request, 'index.html')
+    return render(request, 'home/index.html')
 
 def about(request):
-    return render(request, 'about.html')
+    return render(request, 'home/about.html')
 
 def contact(request):
-    return render(request, 'contact.html')
+    return render(request, 'home/contact.html')
+
+def custom_login(request):
+    if request.method == "POST":
+        username = request.POST["username"]
+        password = request.POST["password"]
+        user = authenticate(request, username=username, password=password)
+        if user:
+            login(request, user)
+            # Redirect by role
+            if user.groups.filter(name="Manager").exists():
+                return redirect("manager_dashboard")
+            elif user.groups.filter(name="Driver").exists():
+                return redirect("driver_dashboard")
+            else:
+                return redirect("home")
+    return render(request, "login.html")
 
 def find_ride(request):
-    return render(request, 'find_ride.html')
+    return render(request, 'vehicle/find_ride.html')
 
 def vehicles(request):
     vehicles = Vehicle.objects.all()
-    return render(request, 'vehicles_list.html', {'vehicles': vehicles})
+    return render(request, 'vehicle/vehicles_list.html', {'vehicles': vehicles})
 
 def vehicle_detail(request, pk):
     vehicle = get_object_or_404(Vehicle, pk=pk)
     routes = Route.objects.filter(vehicle=vehicle).order_by('departure_time')
     empty_seats = Seat.objects.filter(vehicle=vehicle, is_available=True).count()
     expected_time = timedelta(hours=1)
-    return render(request, 'vehicle_detail.html', {
+    return render(request, 'vehicle/vehicle_detail.html', {
         'vehicle': vehicle,
         'routes': routes,
         'empty_seats': empty_seats,
@@ -49,7 +67,7 @@ def available_vehicles(request):
     pickup = request.GET.get('pickup')
     dropoff = request.GET.get('dropoff')
     routes = Route.objects.filter(start_location__icontains=pickup, end_location__icontains=dropoff)
-    return render(request, 'available_vehicles.html', {'routes': routes, 'pickup': pickup, 'dropoff': dropoff})
+    return render(request, 'vehicle/available_vehicles.html', {'routes': routes, 'pickup': pickup, 'dropoff': dropoff})
 
 @login_required
 def book_route(request, route_id):
@@ -73,11 +91,11 @@ def book_route(request, route_id):
             return redirect('booking_success')
     else:
         form = BookingForm(route=route)
-    return render(request, 'book_route.html', {'form': form, 'route': route})
+    return render(request, 'routes/book_route.html', {'form': form, 'route': route})
 
 @login_required
 def booking_success(request):
-    return render(request, 'booking_success.html')
+    return render(request, 'routes/booking_success.html')
 
 def register_view(request):
     if request.method == 'POST':
@@ -93,11 +111,11 @@ def register_view(request):
             return redirect('login')
     else:
         form = CustomRegisterForm()
-    return render(request, 'register.html', {'form': form})
+    return render(request, 'auth/register.html', {'form': form})
 
 class CustomLoginView(LoginView):
     form_class = CustomLoginForm
-    template_name = 'login.html'
+    template_name = 'auth/login.html'
     success_url = reverse_lazy('home')
 
     def form_valid(self, form):
@@ -115,7 +133,7 @@ def logout_view(request):
 
 def all_routes_with_vehicles(request):
     routes = Route.objects.select_related('vehicle').all()
-    return render(request, 'route_list.html', {'routes': routes})
+    return render(request, 'routes/route_list.html', {'routes': routes})
 
 def route_detail(request, route_id):
     route = get_object_or_404(Route, id=route_id)
@@ -126,7 +144,7 @@ def route_detail(request, route_id):
         'route': route,
         'available_seats': available_seats,
     }
-    return render(request, 'route_detail.html', context)
+    return render(request, 'routes/route_detail.html', context)
 
 @login_required
 def submit_feedback(request, route_id):
@@ -184,52 +202,80 @@ def submit_issue(request):
     return JsonResponse({'success': False, 'error': 'Invalid method'})
 
 @login_required
-def submit_feedback_global(request):
-    if request.method == "POST":
-        feedback_type = request.POST.get("type")
-        subject = request.POST.get("subject")
-        message = request.POST.get("message")
-        route_id = request.POST.get("route_id")
-        booking_id = request.POST.get("booking_id")
+def feedback_list(request):
+    feedbacks = Feedback.objects.filter(user=request.user)
+    return render(request, 'feedback/feedback_list.html', {'feedbacks': feedbacks})
 
-        route = None
-        booking = None
+@login_required
+def feedback_add(request):
+    if request.method == 'POST':
+        form = FeedbackForm(request.POST)
+        if form.is_valid():
+            fb = form.save(commit=False)
+            fb.user = request.user
+            fb.save()
+            return redirect('feedback_list')
+    else:
+        form = FeedbackForm()
+    return render(request, 'feedback/feedback_form.html', {'form': form, 'title': 'Add Feedback'})
 
-        # Fetch related objects safely
-        if route_id:
-            try:
-                route = Route.objects.get(id=int(route_id))
-            except (Route.DoesNotExist, ValueError):
-                route = None
+@login_required
+def feedback_edit(request, pk):
+    feedback = get_object_or_404(Feedback, pk=pk, user=request.user)
+    if request.method == 'POST':
+        form = FeedbackForm(request.POST, instance=feedback)
+        if form.is_valid():
+            form.save()
+            return redirect('feedback_list')
+    else:
+        form = FeedbackForm(instance=feedback)
+    return render(request, 'feedback/feedback_form.html', {'form': form, 'title': 'Edit Feedback'})
 
-        if booking_id:
-            try:
-                booking = Booking.objects.get(id=int(booking_id))
-            except (Booking.DoesNotExist, ValueError):
-                booking = None
+@login_required
+def feedback_delete(request, pk):
+    feedback = get_object_or_404(Feedback, pk=pk, user=request.user)
+    if request.method == 'POST':
+        feedback.delete()
+        return redirect('feedback_list')
+    return render(request, 'feedback/feedback_confirm_delete.html', {'feedback': feedback})
 
-        # ✅ Handle different types
-        if feedback_type == "feedback" or feedback_type == "suggestion":
-            Feedback.objects.create(
-                user=request.user,
-                route=route,
-                rating=5,  # default if you’re not collecting rating in the modal
-                comment=f"{subject}\n\n{message}"
-            )
-        elif feedback_type == "issue":
-            Issue.objects.create(
-                user=request.user,
-                route=route,
-                booking=booking,
-                description=f"{subject}\n\n{message}"
-            )
-        else:
-            return JsonResponse({"success": False, "error": "Invalid feedback type."}, status=400)
+@login_required
+def issue_list(request):
+    issues = Issue.objects.filter(user=request.user)
+    return render(request, 'issue/issue_list.html', {'issues': issues})
 
-        return JsonResponse({"success": True})
+@login_required
+def issue_add(request):
+    if request.method == 'POST':
+        form = IssueForm(request.POST)
+        if form.is_valid():
+            issue = form.save(commit=False)
+            issue.user = request.user
+            issue.save()
+            return redirect('issue_list')
+    else:
+        form = IssueForm()
+    return render(request, 'issue/issue_form.html', {'form': form, 'title': 'Report Issue'})
 
-    return JsonResponse({"success": False, "error": "Invalid request method."}, status=405)
+@login_required
+def issue_edit(request, pk):
+    issue = get_object_or_404(Issue, pk=pk, user=request.user)
+    if request.method == 'POST':
+        form = IssueForm(request.POST, instance=issue)
+        if form.is_valid():
+            form.save()
+            return redirect('issue_list')
+    else:
+        form = IssueForm(instance=issue)
+    return render(request, 'issue/issue_form.html', {'form': form, 'title': 'Edit Issue'})
 
+@login_required
+def issue_delete(request, pk):
+    issue = get_object_or_404(Issue, pk=pk, user=request.user)
+    if request.method == 'POST':
+        issue.delete()
+        return redirect('issue_list')
+    return render(request, 'issue/issue_confirm_delete.html', {'issue': issue})
 
 
 
@@ -276,7 +322,7 @@ def manager_dashboard(request):
         'busiest_route': routes.annotate(bookings=Count('booking')).order_by('-bookings').first(),
         'delays': routes.filter(arrival_time__lt=timezone.now()).count(),
     }
-    return render(request, 'manager_dashboard.html', {'vehicles': vehicles, 'routes': routes, 'analytics': analytics})
+    return render(request, 'manager/manager_dashboard.html', {'vehicles': vehicles, 'routes': routes, 'analytics': analytics})
 
 @login_required
 def add_update_vehicle(request, pk=None):
@@ -297,14 +343,14 @@ def add_update_vehicle(request, pk=None):
             return redirect('manager_dashboard')
     else:
         form = VehicleForm(instance=vehicle)
-    return render(request, 'add_update_vehicle.html', {'form': form})
+    return render(request, 'vehicle/add_update_vehicle.html', {'form': form})
 
 @login_required
 def monitor_map(request):
     if not request.user.groups.filter(name='Manager').exists():
         messages.error(request, "Access denied.")
         return redirect('home')
-    return render(request, 'monitor_map.html')
+    return render(request, 'manager/monitor_map.html')
 
 @login_required
 def assign_route(request):
@@ -321,20 +367,32 @@ def assign_route(request):
             return redirect('manager_dashboard')
     else:
         form = RouteForm()
-    return render(request, 'assign_route.html', {'form': form})
+    return render(request, 'routes/assign_route.html', {'form': form})
 
 def vehicle_locations_json(request):
-    locations = VehicleLocation.objects.all()
-    data = [
-        {
-            "id": loc.vehicle.id,
-            "lat": loc.latitude,
-            "lng": loc.longitude,
-            "vehicle_name": loc.vehicle.name,
-            "route": f"{loc.vehicle.route.start_location} to {loc.vehicle.route.end_location}" if hasattr(loc.vehicle, 'route') and loc.vehicle.route else "N/A"
-        } for loc in locations
-    ]
-    return JsonResponse({"locations": data})
+    locations = VehicleLocation.objects.select_related('vehicle', 'vehicle__route').values(
+        'id',
+        'vehicle__name',
+        'vehicle__route__start_location',
+        'vehicle__route__end_location',
+        'lat',
+        'lng',
+        'status'
+    )
+    data = {
+        "locations": [
+            {
+                "id": l["id"],
+                "vehicle_name": l["vehicle__name"],
+                "route": f"{l['vehicle__route__start_location']} → {l['vehicle__route__end_location']}" if l["vehicle__route__start_location"] else "N/A",
+                "lat": l["lat"],
+                "lng": l["lng"],
+                "status": l["status"],
+            }
+            for l in locations
+        ]
+    }
+    return JsonResponse(data)
 
 
 def available_vehicles(request):
@@ -355,8 +413,57 @@ def available_vehicles(request):
         'pickup': pickup,
         'dropoff': dropoff,
     }
-    return render(request, 'available_vehicles.html', context)
+    return render(request, 'vehicle/available_vehicles.html', context)
 
+@login_required
+def driver_vehicle_location_list(request):
+    if not request.user.groups.filter(name="Driver").exists():
+        return redirect("home")
+    locations = VehicleLocation.objects.filter(vehicle__driver=request.user)
+    return render(request, "driver/vehicle_location_list.html", {"locations": locations})
+
+
+@login_required
+def driver_vehicle_location_add(request):
+    if not request.user.groups.filter(name="Driver").exists():
+        return redirect("home")
+
+    if request.method == "POST":
+        form = VehicleLocationForm(request.POST)
+        if form.is_valid():
+            loc = form.save(commit=False)
+            loc.vehicle = Vehicle.objects.get(driver=request.user)
+            loc.save()
+            return redirect("driver_vehicle_location_list")
+    else:
+        form = VehicleLocationForm()
+    return render(request, "driver/vehicle_location_add.html", {"form": form})
+
+
+@login_required
+def driver_vehicle_location_edit(request, loc_id):
+    if not request.user.groups.filter(name="Driver").exists():
+        return redirect("home")
+
+    location = get_object_or_404(VehicleLocation, id=loc_id, vehicle__driver=request.user)
+    if request.method == "POST":
+        form = VehicleLocationForm(request.POST, instance=location)
+        if form.is_valid():
+            form.save()
+            return redirect("driver_vehicle_location_list")
+    else:
+        form = VehicleLocationForm(instance=location)
+    return render(request, "driver/vehicle_location_edit.html", {"form": form, "location": location})
+
+
+@login_required
+def driver_vehicle_location_delete(request, loc_id):
+    if not request.user.groups.filter(name="Driver").exists():
+        return redirect("home")
+
+    location = get_object_or_404(VehicleLocation, id=loc_id, vehicle__driver=request.user)
+    location.delete()
+    return redirect("driver_vehicle_location_list")
 
 def transport_data_api(request):
     routes = Route.objects.select_related('vehicle').filter(
@@ -421,3 +528,105 @@ def get_user_bookings(request):
         for b in bookings
     ]
     return JsonResponse({"bookings": data})
+
+@login_required
+def driver_dashboard(request):
+    """Show all data related to this driver's routes and vehicles."""
+
+    # Make sure this user is a driver
+    if not request.user.groups.filter(name="Driver").exists():
+        return redirect("home")
+
+    # 1️⃣ Get all vehicles assigned to this driver
+    vehicles = Vehicle.objects.filter(driver=request.user)
+
+    # 2️⃣ Get all routes that use these vehicles
+    routes = Route.objects.filter(vehicle__in=vehicles)
+
+    # 3️⃣ Get bookings related to those routes
+    bookings = Booking.objects.filter(route__in=routes).select_related("route", "user", "seat")
+
+    # 4️⃣ Get feedback and issues related to those routes
+    feedback = Feedback.objects.filter(route__in=routes)
+    issues = Issue.objects.filter(route__in=routes)
+
+    # 5️⃣ Vehicle locations
+    locations = VehicleLocation.objects.filter(vehicle__in=vehicles)
+
+    return render(
+        request,
+        "driver/driver_dashboard.html",
+        {
+            "vehicles": vehicles,
+            "routes": routes,
+            "bookings": bookings,
+            "feedback": feedback,
+            "issues": issues,
+            "locations": locations,
+        },
+    )
+
+def driver_seat_list(request):
+    seats = Seat.objects.filter(vehicle__driver=request.user)
+    return render(request, "driver/seat_list.html", {"seats": seats})
+
+
+@login_required
+def driver_seat_add(request):
+    """Add a seat for one of the driver's vehicles."""
+    if not request.user.groups.filter(name="Driver").exists():
+        return redirect("home")
+
+    if request.method == "POST":
+        form = SeatForm(request.POST)
+        if form.is_valid():
+            seat = form.save(commit=False)
+            # Prevent adding to another driver’s vehicle
+            if seat.vehicle.driver != request.user:
+                messages.error(request, "You can only add seats to your own vehicles.")
+                return redirect("driver_seat_list")
+            seat.save()
+            messages.success(request, "Seat added successfully.")
+            return redirect("driver_seat_list")
+    else:
+        form = SeatForm()
+
+    form.fields["vehicle"].queryset = Vehicle.objects.filter(driver=request.user)
+    return render(request, "driver/seat_form.html", {"form": form, "title": "Add Seat"})
+
+
+@login_required
+def driver_seat_edit(request, seat_id):
+    """Edit a specific seat."""
+    if not request.user.groups.filter(name="Driver").exists():
+        return redirect("home")
+
+    seat = get_object_or_404(Seat, id=seat_id, vehicle__driver=request.user)
+
+    if request.method == "POST":
+        form = SeatForm(request.POST, instance=seat)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Seat updated successfully.")
+            return redirect("driver_seat_list")
+    else:
+        form = SeatForm(instance=seat)
+
+    form.fields["vehicle"].queryset = Vehicle.objects.filter(driver=request.user)
+    return render(request, "driver/seat_form.html", {"form": form, "title": "Edit Seat"})
+
+
+@login_required
+def driver_seat_delete(request, seat_id):
+    """Delete a seat belonging to the driver."""
+    if not request.user.groups.filter(name="Driver").exists():
+        return redirect("home")
+
+    seat = get_object_or_404(Seat, id=seat_id, vehicle__driver=request.user)
+
+    if request.method == "POST":
+        seat.delete()
+        messages.success(request, "Seat deleted successfully.")
+        return redirect("driver_seat_list")
+
+    return render(request, "driver/seat_confirm_delete.html", {"seat": seat})

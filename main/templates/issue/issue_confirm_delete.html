@@ -1,0 +1,296 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ title }} - Digital Larry Adda{% endblock %}
+
+{% block content %}
+<style>
+  :root {
+    --gold: #D4AF37;
+    --gold-light: #E8C56A;
+    --gold-dark: #B8941F;
+    --cream: #FFFAF0;
+    --charcoal: #2D2D2D;
+    --soft-white: #FDFDFD;
+    --shadow-soft: 0 12px 40px rgba(212, 175, 55, 0.15);
+    --shadow-hover: 0 20px 60px rgba(212, 175, 55, 0.3);
+    --error-red: #dc3545;
+  }
+
+  .toaster-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+    max-width: 400px;
+    width: 100%;
+    animation: slideIn 0.5s ease-out forwards;
+  }
+
+  .toaster {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(16px);
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: var(--shadow-soft);
+    border: 1.5px solid rgba(212,175,55,0.2);
+    position: relative;
+    transition: all 0.3s ease;
+    text-align: center;
+    overflow: hidden;
+  }
+
+  .toaster:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-hover);
+    border-color: rgba(212,175,55,0.4);
+  }
+
+  .toaster h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.8rem, 4vw, 2rem);
+    margin-bottom: 1rem;
+    color: var(--charcoal);
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .toaster h2 i {
+    margin-right: 0.5rem;
+  }
+
+  .toaster p {
+    font-size: 1rem;
+    color: var(--charcoal);
+    margin-bottom: 1.5rem;
+  }
+
+  .toaster strong {
+    color: var(--gold-dark);
+    font-weight: 700;
+  }
+
+  .route-image {
+    width: 100%;
+    max-height: 100px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    opacity: 0;
+    animation: fadeIn 0.5s ease-out forwards;
+  }
+
+  .btn-golden, .btn-cancel {
+    padding: 0.8rem 2rem;
+    font-size: 1rem;
+    font-weight: 700;
+    border-radius: 50px;
+    transition: all 0.4s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+  }
+
+  .btn-golden {
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
+    color: white;
+    border: none;
+    box-shadow: 0 8px 20px rgba(212,175,55,0.3);
+  }
+
+  .btn-cancel {
+    background: transparent;
+    border: 1.5px solid var(--gold);
+    color: var(--gold);
+    box-shadow: none;
+  }
+
+  .btn-golden::before, .btn-cancel::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255,255,255,0.3);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+    z-index: -1;
+  }
+
+  .btn-golden:hover, .btn-cancel:hover {
+    transform: translateY(-3px) scale(1.03);
+  }
+
+  .btn-golden:hover {
+    box-shadow: 0 12px 30px rgba(212,175,55,0.4);
+    animation: pulse 1s infinite;
+  }
+
+  .btn-cancel:hover {
+    background: var(--gold);
+    color: white;
+    box-shadow: 0 8px 20px rgba(212,175,55,0.3);
+  }
+
+  .btn-golden:active::before, .btn-cancel:active::before {
+    width: 200px;
+    height: 200px;
+  }
+
+  @keyframes pulse {
+    0% { transform: translateY(-3px) scale(1.03); }
+    50% { transform: translateY(-3px) scale(1.05); }
+    100% { transform: translateY(-3px) scale(1.03); }
+  }
+
+  .btn-golden::after, .btn-cancel::after {
+    content: attr(aria-label);
+    position: absolute;
+    top: -2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--charcoal);
+    color: white;
+    padding: 0.3rem 0.6rem;
+    font-size: 0.75rem;
+    border-radius: 6px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    z-index: 10;
+  }
+
+  .btn-golden:hover::after, .btn-cancel:hover::after {
+    opacity: 1;
+  }
+
+  @keyframes slideIn {
+    from { transform: translateY(100px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  @keyframes slideOut {
+    from { transform: translateY(0); opacity: 1; }
+    to { transform: translateY(100px); opacity: 0; }
+  }
+
+  .toaster-dismissed {
+    animation: slideOut 0.5s ease-in forwards;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @media (max-width: 576px) {
+    .toaster-container {
+      bottom: 10px;
+      right: 10px;
+      max-width: 90%;
+    }
+
+    .toaster {
+      padding: 1.5rem;
+      border-radius: 12px;
+    }
+
+    .toaster h2 {
+      font-size: 1.6rem;
+    }
+
+    .toaster p {
+      font-size: 0.9rem;
+    }
+
+    .btn-golden, .btn-cancel {
+      padding: 0.7rem 1.5rem;
+      font-size: 0.9rem;
+    }
+
+    .route-image {
+      max-height: 80px;
+    }
+  }
+</style>
+
+<div class="toaster-container" id="toaster">
+  <div class="toaster" role="alert" aria-live="assertive" aria-atomic="true">
+    <h2><i class="fas fa-exclamation-triangle"></i> Confirm Delete</h2>
+    {% if issue.route.image %}
+      <img class="route-image" src="{{ issue.route.image.url }}" alt="Route: {{ issue.route.start_location }} to {{ issue.route.end_location }}">
+    {% endif %}
+    <p>
+      Are you sure you want to delete this issue
+      {% if issue.route %}
+        related to <strong>{{ issue.route.start_location }} → {{ issue.route.end_location }}</strong>?
+      {% else %}
+        (general issue)?
+      {% endif %}
+    </p>
+    <form method="POST" id="delete-form">
+      {% csrf_token %}
+      <div class="d-flex justify-content-center gap-3">
+        <a href="{% url 'issue_list' %}" class="btn-cancel" aria-label="Cancel deletion">
+          <i class="fas fa-times"></i> Cancel
+        </a>
+        <button type="submit" class="btn-golden" aria-label="Confirm delete issue">
+          <i class="fas fa-trash"></i> Delete
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const toaster = document.getElementById('toaster');
+    const cancelBtn = document.querySelector('.btn-cancel');
+    const form = document.getElementById('delete-form');
+
+    // Cancel hides toaster with animation then redirects
+    cancelBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      toaster.classList.add('toaster-dismissed');
+      setTimeout(() => {
+        window.location.href = "{% url 'issue_list' %}";
+      }, 500);
+    });
+
+    // Clicking outside toaster closes it
+    document.addEventListener('click', function(e) {
+      if (!toaster.contains(e.target)) {
+        toaster.classList.add('toaster-dismissed');
+        setTimeout(() => {
+          window.location.href = "{% url 'issue_list' %}";
+        }, 500);
+      }
+    });
+
+    // Prevent close when clicking inside toaster
+    toaster.addEventListener('click', function(e) {
+      e.stopPropagation();
+    });
+
+    // ESC key closes toaster
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        toaster.classList.add('toaster-dismissed');
+        setTimeout(() => {
+          window.location.href = "{% url 'issue_list' %}";
+        }, 500);
+      }
+    });
+  });
+</script>
+
+{% endblock %}

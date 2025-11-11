@@ -1,0 +1,426 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ title }} - Digital Larry Adda{% endblock %}
+
+{% block content %}
+<style>
+  :root {
+    --gold: #D4AF37;
+    --gold-light: #E8C56A;
+    --gold-dark: #B8941F;
+    --cream: #FFFAF0;
+    --charcoal: #2D2D2D;
+    --soft-white: #FDFDFD;
+    --shadow-soft: 0 12px 40px rgba(212, 175, 55, 0.15);
+    --shadow-hover: 0 20px 60px rgba(212, 175, 55, 0.3);
+  }
+
+  .feedback-form-section {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5rem 1.5rem;
+    background: linear-gradient(135deg, #fffdf8 0%, var(--cream) 100%);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .feedback-form-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 20% 80%, rgba(212,175,55,0.12) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(212,175,55,0.08) 0%, transparent 50%);
+    z-index: 0;
+    animation: breathe 12s ease-in-out infinite;
+  }
+
+  @keyframes breathe {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
+
+  .orb {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, var(--gold-light), var(--gold));
+    filter: blur(1px);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 1;
+    animation: floatOrb 8s infinite ease-in-out;
+    will-change: transform, opacity;
+  }
+
+  @keyframes floatOrb {
+    0%, 100% { transform: translateY(0) scale(1); opacity: 0.3; }
+    50% { transform: translateY(-30px) scale(1.1); opacity: 0.5; }
+  }
+
+  .feedback-card {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(16px);
+    border-radius: 24px;
+    padding: 3rem;
+    max-width: 600px;
+    width: 100%;
+    box-shadow: var(--shadow-soft);
+    border: 1.5px solid rgba(212,175,55,0.2);
+    position: relative;
+    z-index: 2;
+    transition: all 0.5s ease;
+    animation: fadeInUp 0.8s ease-out;
+  }
+
+  .feedback-card:hover {
+    transform: translateY(-10px);
+    box-shadow: var(--shadow-hover);
+    border-color: rgba(212,175,55,0.4);
+  }
+
+  .feedback-card h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.2rem, 5vw, 3rem);
+    text-align: center;
+    margin-bottom: 2.5rem;
+    color: var(--charcoal);
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    position: relative;
+  }
+
+  .feedback-card h2::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 4px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    border-radius: 2px;
+    animation: underlineGrow 1.5s ease-out forwards;
+  }
+
+  @keyframes underlineGrow {
+    from { width: 0; }
+    to { width: 80px; }
+  }
+
+  .form-group {
+    position: relative;
+    margin-bottom: 2rem;
+  }
+
+  .form-label {
+    position: absolute;
+    top: 50%;
+    left: 1.2rem;
+    transform: translateY(-50%);
+    font-size: 1rem;
+    font-weight: 600;
+    color: #666;
+    pointer-events: none;
+    transition: all 0.3s ease;
+    z-index: 1;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+
+  .form-control {
+    width: 100%;
+    padding: 1rem 1.2rem;
+    font-size: 1rem;
+    background: rgba(255, 255, 255, 0.7);
+    border: 1.5px solid rgba(212,175,55,0.2);
+    border-radius: 16px;
+    transition: all 0.4s ease;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    position: relative;
+    z-index: 0;
+    color: var(--charcoal);
+  }
+
+  .form-control:focus {
+    outline: none;
+    border-color: var(--gold);
+    background: white;
+    box-shadow: 0 8px 30px rgba(212,175,55,0.2);
+    transform: scale(1.02);
+  }
+
+  .form-control:focus + .form-label,
+  .form-control:not(:placeholder-shown) + .form-label,
+  select.form-control:not([value=""]) + .form-label {
+    top: -10px;
+    left: 1rem;
+    font-size: 0.8rem;
+    color: var(--gold-dark);
+    background: white;
+    padding: 0 0.5rem;
+    font-weight: 700;
+  }
+
+  .form-control::placeholder {
+    color: transparent;
+  }
+
+  .form-control option {
+    color: var(--charcoal);
+  }
+
+  /* Star Rating Field */
+  .rating-field {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    padding: 0.5rem;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+  }
+
+  .rating-field input {
+    display: none;
+  }
+
+  .rating-field label {
+    font-size: 1.5rem;
+    color: #ccc;
+    cursor: pointer;
+    transition: color 0.3s ease;
+  }
+
+  .rating-field input:checked + label,
+  .rating-field label:hover,
+  .rating-field label:hover ~ label {
+    color: var(--gold);
+  }
+
+  /* Buttons */
+  .btn-golden, .btn-back {
+    padding: 1rem 2.5rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    border-radius: 50px;
+    transition: all 0.4s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+  }
+
+  .btn-golden {
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
+    color: white;
+    border: none;
+    box-shadow: 0 10px 30px rgba(212,175,55,0.4);
+  }
+
+  .btn-back {
+    background: transparent;
+    border: 1.5px solid var(--gold);
+    color: var(--gold);
+    box-shadow: none;
+  }
+
+  .btn-golden::before, .btn-back::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255,255,255,0.3);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+    z-index: -1;
+  }
+
+  .btn-golden:hover, .btn-back:hover {
+    transform: translateY(-5px) scale(1.03);
+  }
+
+  .btn-golden:hover {
+    box-shadow: 0 15px 40px rgba(212,175,55,0.5);
+    animation: pulse 1s infinite;
+  }
+
+  .btn-back:hover {
+    background: var(--gold);
+    color: white;
+    box-shadow: 0 8px 20px rgba(212,175,55,0.4);
+  }
+
+  .btn-golden:active::before, .btn-back:active::before {
+    width: 300px;
+    height: 300px;
+  }
+
+  @keyframes pulse {
+    0% { transform: translateY(-5px) scale(1.03); }
+    50% { transform: translateY(-5px) scale(1.05); }
+    100% { transform: translateY(-5px) scale(1.03); }
+  }
+
+  .btn-golden::after, .btn-back::after {
+    content: attr(aria-label);
+    position: absolute;
+    top: -2.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--charcoal);
+    color: white;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+    border-radius: 8px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    z-index: 10;
+  }
+
+  .btn-golden:hover::after, .btn-back:hover::after {
+    opacity: 1;
+  }
+
+  .errorlist {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1rem;
+    color: #dc3545;
+    font-size: 0.9rem;
+    text-align: center;
+  }
+
+  .errorlist li {
+    background: rgba(220,53,69,0.1);
+    padding: 0.5rem;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+  }
+
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 768px) {
+    .feedback-form-section {
+      padding: 4rem 1rem;
+    }
+
+    .feedback-card {
+      padding: 2rem;
+      border-radius: 16px;
+    }
+
+    .feedback-card h2 {
+      font-size: 2.2rem;
+    }
+
+    .form-control {
+      padding: 0.9rem 1rem;
+      font-size: 0.95rem;
+    }
+
+    .btn-golden, .btn-back {
+      padding: 0.9rem 2rem;
+      font-size: 1rem;
+    }
+  }
+
+  @media (max-width: 576px) {
+    .feedback-form-section {
+      padding: 3rem 0.8rem;
+    }
+
+    .feedback-card {
+      padding: 1.5rem;
+    }
+
+    .feedback-card h2 {
+      font-size: 1.8rem;
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-control {
+      padding: 0.8rem;
+      font-size: 0.9rem;
+    }
+
+    .btn-golden, .btn-back {
+      padding: 0.8rem 1.5rem;
+      font-size: 0.95rem;
+    }
+
+    .orb {
+      display: none;
+    }
+  }
+</style>
+
+<section class="feedback-form-section">
+  <div class="orb" style="width:80px;height:80px;top:15%;left:10%;animation-delay:0s;"></div>
+  <div class="orb" style="width:60px;height:60px;top:70%;right:15%;animation-delay:2s;"></div>
+  <div class="orb" style="width:100px;height:100px;bottom:20%;left:5%;animation-delay:4s;"></div>
+
+  <div class="feedback-card">
+    <h2>{{ title }}</h2>
+    <form method="POST">
+      {% csrf_token %}
+      {% if form.errors %}
+        <ul class="errorlist">
+          {% for field in form %}
+            {% for error in field.errors %}
+              <li>{{ error }}</li>
+            {% endfor %}
+          {% endfor %}
+          {% for error in form.non_field_errors %}
+            <li>{{ error }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+      <div class="form-group">
+        {{ form.route }}
+        <label for="{{ form.route.id_for_label }}" class="form-label">Route</label>
+      </div>
+      <div class="form-group">
+        {{ form.comment }}
+        <label for="{{ form.comment.id_for_label }}" class="form-label">Comment</label>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Rating</label>
+        <div class="rating-field">
+          {% for radio in form.rating %}
+            {{ radio.tag }}
+            <label for="{{ radio.id_for_label }}" class="fas fa-star" aria-label="{{ radio.choice_label }}"></label>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="d-flex justify-content-between mt-4">
+        <a href="{% url 'feedback_list' %}" class="btn-back" aria-label="Back to feedback list">
+          <i class="fas fa-arrow-left"></i> Back
+        </a>
+        <button type="submit" class="btn-golden" aria-label="Save feedback">
+          <i class="fas fa-save"></i> Save
+        </button>
+      </div>
+    </form>
+  </div>
+</section>
+{% endblock %}

@@ -30,13 +30,15 @@ class Vehicle(models.Model):
         return f"{self.name} ({self.number_plate})"
 
 class VehicleLocation(models.Model):
-    vehicle = models.OneToOneField(Vehicle, on_delete=models.CASCADE)
-    latitude = models.FloatField(default=0.0)
-    longitude = models.FloatField(default=0.0)
-    timestamp = models.DateTimeField(auto_now=True)
+    vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE)
+    latitude = models.DecimalField(max_digits=9, decimal_places=6)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"Location for {self.vehicle}"
+        return f"{self.vehicle} - ({self.latitude}, {self.longitude})"
+
+
 
 class Seat(models.Model):
     SEAT_TYPE_CHOICES = [

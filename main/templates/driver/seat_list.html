@@ -1,0 +1,327 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Manage Seats - Digital Larry Adda{% endblock %}
+
+{% block content %}
+<style>
+  :root {
+    --gold: #D4AF37;
+    --gold-light: #E8C56A;
+    --gold-dark: #B8941F;
+    --cream: #FFFAF0;
+    --charcoal: #2D2D2D;
+    --shadow-soft: 0 25px 70px rgba(212, 175, 55, 0.25);
+    --shadow-hover: 0 40px 120px rgba(212, 175, 55, 0.5);
+  }
+
+  .seats-section {
+    min-height: 100vh;
+    padding: 6rem 1.5rem 4rem;
+    background: linear-gradient(135deg, #fffdf8 0%, var(--cream) 100%);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .seats-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+      radial-gradient(circle at 15% 85%, rgba(212,175,55,0.2) 0%, transparent 50%),
+      radial-gradient(circle at 85% 15%, rgba(212,175,55,0.15) 0%, transparent 50%);
+    z-index: 0;
+    animation: breathe 16s ease-in-out infinite;
+  }
+
+  @keyframes breathe {
+    0%, 100% { opacity: 0.7; }
+    50% { opacity: 1; }
+  }
+
+  .orb {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, var(--gold-light), var(--gold));
+    filter: blur(2.5px);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 1;
+    animation: floatOrb 14s infinite ease-in-out;
+  }
+
+  @keyframes floatOrb {
+    0%, 100% { transform: translateY(0) scale(1); opacity: 0.3; }
+    50% { transform: translateY(-70px) scale(1.5); opacity: 0.78; }
+  }
+
+  /* HEADER */
+  .seats-header {
+    text-align: center;
+    margin-bottom: 4rem;
+    position: relative;
+    z-index: 2;
+  }
+
+  .seats-header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.8rem, 7vw, 4rem);
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin: 0 0 1rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    animation: fadeInDown 1.2s ease-out;
+  }
+
+  @keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .seats-header p {
+    font-size: 1.2rem;
+    color: var(--charcoal);
+    max-width: 700px;
+    margin: 0 auto;
+    animation: fadeInUp 1.2s ease-out 0.6s both;
+  }
+
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* SEATS GRID */
+  .seats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 2;
+  }
+
+  .seat-card {
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(20px);
+    border-radius: 24px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-soft);
+    border: 2px solid rgba(212,175,55,0.3);
+    transition: all 0.6s ease;
+    animation: cardRise 0.8s ease-out forwards;
+    opacity: 0;
+    transform: translateY(30px);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .seat-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(212,175,55,0.1) 0%, transparent 70%);
+    transform: scale(0);
+    transition: transform 0.6s ease;
+  }
+
+  .seat-card:hover::before {
+    transform: scale(1);
+  }
+
+  .seat-card:nth-child(1) { animation-delay: 0.1s; }
+  .seat-card:nth-child(2) { animation-delay: 0.2s; }
+  .seat-card:nth-child(3) { animation-delay: 0.3s; }
+  .seat-card:nth-child(4) { animation-delay: 0.4s; }
+
+  @keyframes cardRise {
+    0% { opacity: 0; transform: translateY(30px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  .seat-card:hover {
+    transform: translateY(-12px) scale(1.05);
+    box-shadow: var(--shadow-hover);
+    border-color: var(--gold);
+  }
+
+  .seat-card h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem;
+    color: var(--gold-dark);
+    background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 1rem;
+  }
+
+  .seat-card p {
+    font-size: 0.95rem;
+    color: var(--charcoal);
+    margin-bottom: 0.5rem;
+  }
+
+  .seat-type-badge {
+    display: inline-block;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border-radius: 12px;
+    margin-bottom: 0.5rem;
+  }
+
+  .seat-type-vip {
+    background: rgba(212,175,55,0.2);
+    color: var(--gold-dark);
+  }
+
+  .seat-type-standard {
+    background: rgba(0,0,0,0.05);
+    color: var(--charcoal);
+  }
+
+  .availability-badge {
+    display: inline-block;
+    padding: 0.4rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border-radius: 16px;
+  }
+
+  .availability-available {
+    background: rgba(34,197,94,0.1);
+    color: #15803d;
+  }
+
+  .availability-booked {
+    background: rgba(239,68,68,0.1);
+    color: #b91c1c;
+  }
+
+  .no-seats-card {
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(20px);
+    border-radius: 24px;
+    padding: 2rem;
+    box-shadow: var(--shadow-soft);
+    border: 2px solid rgba(212,175,55,0.3);
+    text-align: center;
+    max-width: 600px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 2;
+    animation: cardRise 0.8s ease-out forwards;
+  }
+
+  .no-seats-card p {
+    font-size: 1.1rem;
+    color: var(--charcoal);
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 992px) {
+    .seats-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .seats-section {
+      padding: 5rem 1rem;
+    }
+    .seats-header h1 {
+      font-size: 2.5rem;
+    }
+    .seats-header p {
+      font-size: 1rem;
+    }
+    .seat-card {
+      padding: 1.2rem;
+    }
+    .seat-card h3 {
+      font-size: 1.2rem;
+    }
+    .seat-card p {
+      font-size: 0.9rem;
+    }
+  }
+
+  @media (max-width: 576px) {
+    .seats-header h1 {
+      font-size: 2rem;
+    }
+    .seat-card {
+      border-radius: 20px;
+    }
+    .seat-card h3 {
+      font-size: 1.1rem;
+    }
+    .seat-card p {
+      font-size: 0.85rem;
+    }
+    .seat-type-badge, .availability-badge {
+      font-size: 0.75rem;
+    }
+  }
+</style>
+
+<section class="seats-section">
+  <div class="orb" style="width:110px;height:110px;top:10%;left:6%;animation-delay:0s;"></div>
+  <div class="orb" style="width:90px;height:90px;top:75%;right:10%;animation-delay:2.8s;"></div>
+  <div class="orb" style="width:130px;height:130px;bottom:12%;left:8%;animation-delay:5.5s;"></div>
+
+  <div class="seats-header">
+    <h1>Manage Vehicle Seats</h1>
+    <p>View and manage seat details for your assigned vehicles</p>
+  </div>
+
+  {% if seats %}
+    <div class="seats-grid">
+      {% for seat in seats %}
+        <div class="seat-card">
+          <h3>Seat {{ seat.seat_number }}</h3>
+          <p><strong>Vehicle:</strong> {{ seat.vehicle.name }}</p>
+          <div class="seat-type-badge {% if seat.seat_type == 'VIP' %}seat-type-vip{% else %}seat-type-standard{% endif %}">
+            {{ seat.seat_type }}
+          </div>
+          <p><strong>Fare:</strong> Rs. {{ seat.fare|floatformat:0 }}</p>
+          <div class="availability-badge {% if seat.is_available %}availability-available{% else %}availability-booked{% endif %}">
+            {{ seat.is_available|yesno:"Available,Booked" }}
+          </div>
+        </div>
+      {% empty %}
+        <div class="no-seats-card">
+          <p>No seats found for your assigned vehicles.</p>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+</section>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/js/all.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Golden confetti on load
+    setTimeout(() => {
+      confetti({
+        particleCount: 140,
+        spread: 85,
+        origin: { y: 0.3 },
+        colors: ['#D4AF37', '#E8C56A', '#B8941F', '#FFD700'],
+        scalar: 1.15,
+        ticks: 220
+      });
+    }, 1000);
+  });
+</script>
+{% endblock %}
