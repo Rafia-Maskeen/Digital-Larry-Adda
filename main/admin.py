@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from .models import CustomUser, Vehicle, Seat, Route, Booking, Feedback, Issue, VehicleLocation
-from .models import AIInteraction
+from .models import AIInteraction, AdminMessage
 
 admin.site.register(Route)
 admin.site.register(Booking)
@@ -62,3 +62,5 @@ class AIInteractionAdmin(admin.ModelAdmin):
     list_display = ('user', 'question', 'created_at')
     search_fields = ('question', 'response')
     list_filter = ('created_at',)
+
+admin.site.register(AdminMessage)

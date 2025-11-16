@@ -1,4 +1,4 @@
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser,User
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 
@@ -76,12 +76,13 @@ class Booking(models.Model):
     ]
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     route = models.ForeignKey(Route, on_delete=models.CASCADE)
-    seat = models.ForeignKey(Seat, on_delete=models.CASCADE)
+    seats = models.ManyToManyField(Seat)  # ⬅ MULTIPLE SEATS
     fare = models.DecimalField(max_digits=8, decimal_places=2)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='Pending')
 
     def __str__(self):
-        return f"Booking by {self.user} - {self.seat} ({self.status})"
+        return f"Booking by {self.user} - {self.status}"
+
 
 class Feedback(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
@@ -126,3 +127,14 @@ class AIInteraction(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+
+from django.conf import settings
+
+class AdminMessage(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    subject = models.CharField(max_length=255)
+    message = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} → Admin: {self.subject}"

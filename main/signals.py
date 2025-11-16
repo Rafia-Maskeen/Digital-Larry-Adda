@@ -4,6 +4,7 @@ from .models import Vehicle, Seat, AIInteraction , Booking # 👈 NEW: For loggi
 import random
 from django.core.mail import send_mail
 from django.conf import settings
+from django.contrib.auth.models import Group
 
 @receiver(post_save, sender=Vehicle)
 def create_seats_for_vehicle(sender, instance, created, **kwargs):
@@ -44,3 +45,16 @@ def simulate_gps_update(sender, instance, created, **kwargs):
                 'longitude': random.uniform(73.0, 73.1),  # Random lng
             }
         )
+
+@receiver(post_save, sender=settings.AUTH_USER_MODEL)
+def assign_driver_group(sender, instance, created, **kwargs):
+    if not created:
+        return
+
+    # If user was created from admin (no request context), auto set Driver
+    if instance.is_staff:  
+        try:
+            driver_group = Group.objects.get(name="Driver")
+            instance.groups.add(driver_group)
+        except Group.DoesNotExist:
+            pass

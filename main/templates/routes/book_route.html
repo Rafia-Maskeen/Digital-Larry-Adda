@@ -10,8 +10,8 @@
     --gold-dark: #B8941F;
     --cream: #FFFAF0;
     --charcoal: #2D2D2D;
-    --shadow-soft: 0 15px 50px rgba(212, 175, 55, 0.18);
-    --shadow-hover: 0 30px 90px rgba(212, 175, 55, 0.35);
+    --shadow-soft: 0 20px 60px rgba(212, 175, 55, 0.22);
+    --shadow-hover: 0 35px 100px rgba(212, 175, 55, 0.45);
   }
 
   .booking-section {
@@ -30,14 +30,14 @@
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
     background: 
-      radial-gradient(circle at 15% 85%, rgba(212,175,55,0.15) 0%, transparent 50%),
-      radial-gradient(circle at 85% 15%, rgba(212,175,55,0.1) 0%, transparent 50%);
+      radial-gradient(circle at 20% 80%, rgba(212,175,55,0.18) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(212,175,55,0.12) 0%, transparent 50%);
     z-index: 0;
-    animation: breathe 12s ease-in-out infinite;
+    animation: pulseGlow 10s ease-in-out infinite;
   }
 
-  @keyframes breathe {
-    0%, 100% { opacity: 0.7; }
+  @keyframes pulseGlow {
+    0%, 100% { opacity: 0.6; }
     50% { opacity: 1; }
   }
 
@@ -45,331 +45,571 @@
     position: absolute;
     border-radius: 50%;
     background: radial-gradient(circle at 30% 30%, var(--gold-light), var(--gold));
-    filter: blur(1.5px);
+    filter: blur(2px);
     opacity: 0;
     pointer-events: none;
     z-index: 1;
-    animation: floatOrb 10s infinite ease-in-out;
+    animation: floatOrb 12s infinite ease-in-out;
   }
 
   @keyframes floatOrb {
     0%, 100% { transform: translateY(0) scale(1); opacity: 0.3; }
-    50% { transform: translateY(-50px) scale(1.3); opacity: 0.6; }
+    50% { transform: translateY(-60px) scale(1.4); opacity: 0.7; }
   }
 
   .booking-card {
-    background: rgba(255, 255, 255, 0.88);
-    backdrop-filter: blur(18px);
-    border-radius: 32px;
-    padding: 3.5rem;
-    max-width: 540px;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 36px;
+    padding: 4rem 3rem;
+    max-width: 700px;
     width: 100%;
-    box-shadow: var(--shadow-soft), inset 0 0 40px rgba(212,175,55,0.1);
-    border: 1.5px solid rgba(212,175,55,0.25);
+    box-shadow: var(--shadow-soft), inset 0 0 50px rgba(212,175,55,0.12);
+    border: 2px solid rgba(212,175,55,0.3);
     position: relative;
     z-index: 2;
-    transition: all 0.6s ease;
+    transition: all 0.7s cubic-bezier(0.25, 0.8, 0.25, 1);
+    animation: riseIn 1.2s ease-out forwards;
+  }
+
+  @keyframes riseIn {
+    0% { opacity: 0; transform: translateY(40px) scale(0.95); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
   }
 
   .booking-card:hover {
-    transform: translateY(-12px);
+    transform: translateY(-15px) scale(1.02);
     box-shadow: var(--shadow-hover);
     border-color: var(--gold);
   }
 
   .booking-card h2 {
     font-family: 'Playfair Display', serif;
-    font-size: clamp(2rem, 5vw, 2.6rem);
+    font-size: clamp(2rem, 5vw, 2.8rem);
     text-align: center;
     margin-bottom: 1.5rem;
     background: linear-gradient(135deg, var(--gold), var(--gold-light));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    animation: fadeInUp 0.8s ease-out 0.3s both;
+  }
+
+  @keyframes fadeInUp {
+    0% { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
   }
 
   .route-info {
-    background: rgba(212,175,55,0.12);
-    padding: 1.2rem;
-    border-radius: 20px;
-    margin-bottom: 1.8rem;
+    background: linear-gradient(135deg, rgba(212,175,55,0.15), rgba(212,175,55,0.08));
+    padding: 1.5rem;
+    border-radius: 24px;
+    margin-bottom: 2.5rem;
     text-align: center;
-    font-size: 1rem;
+    font-size: 1.05rem;
     color: var(--charcoal);
-    border: 1px dashed rgba(212,175,55,0.3);
+    border: 1.5px solid rgba(212,175,55,0.35);
+    animation: fadeInUp 0.8s ease-out 0.5s both;
+    position: relative;
+    overflow: hidden;
   }
 
-  .route-info strong { color: var(--gold-dark); }
+  .route-info::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(255,255,255,0.3), transparent);
+    animation: shimmer 3s infinite;
+  }
+
+  @keyframes shimmer {
+    0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+    100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+  }
+
+  .route-info strong {
+    color: var(--gold-dark);
+    font-weight: 700;
+  }
 
   .form-group {
-    margin-bottom: 1.2rem;
+    margin-bottom: 1.8rem;
+    animation: fadeInUp 0.8s ease-out calc(0.7s + var(--delay)) both;
   }
 
+  .form-group:nth-child(1) { --delay: 0s; }
+  .form-group:nth-child(2) { --delay: 0.1s; }
+  .form-group:nth-child(3) { --delay: 0.2s; }
+  .form-group:nth-child(4) { --delay: 0.3s; }
+
   .form-group label {
-    font-weight: 600;
+    font-weight: 700;
+    margin-bottom: 0.6rem;
+    display: block;
     color: var(--charcoal);
-    margin-bottom: 0.4rem;
+    font-size: 0.95rem;
+    letter-spacing: 0.5px;
+  }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    width: 100%;
+    padding: 0.9rem 1.2rem;
+    border: 2px solid rgba(212,175,55,0.25);
+    border-radius: 16px;
+    font-size: 1rem;
+    background: rgba(255,255,255,0.8);
+    transition: all 0.4s ease;
+    color: var(--charcoal);
+  }
+
+  .form-group input:focus,
+  .form-group select:focus,
+  .form-group textarea:focus {
+    outline: none;
+    border-color: var(--gold);
+    background: white;
+    box-shadow: 0 0 0 4px rgba(212,175,55,0.15);
+    transform: translateY(-2px);
+  }
+
+  /* MULTI SELECT CHECKBOX DROPDOWN */
+  .multi-select-box {
+    position: relative;
+    margin-bottom: 1.5rem;
+  }
+
+  .multi-select-dropdown {
+    border: 2px solid rgba(212,175,55,0.25);
+    border-radius: 16px;
+    padding: 0.9rem 1.2rem;
+    cursor: pointer;
+    background: rgba(255,255,255,0.8);
+    transition: all 0.4s ease;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    z-index: 10;
+  }
+
+  .multi-select-dropdown::after {
+    content: '▼';
+    font-size: 0.8rem;
+    color: var(--gold);
+    transition: transform 0.3s ease;
+  }
+
+  .multi-select-dropdown.active {
+    border-color: var(--gold);
+    background: white;
+    box-shadow: 0 4px 12px rgba(212,175,55,0.2);
+  }
+
+  .multi-select-dropdown.active::after {
+    transform: rotate(180deg);
+  }
+
+  .multi-select-dropdown:hover {
+    border-color: var(--gold);
+    background: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(212,175,55,0.2);
+  }
+
+  .multi-select-list {
+    display: none;
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    max-height: 300px;
+    overflow-y: auto;
+    border: 2px solid rgba(212,175,55,0.3);
+    border-radius: 16px;
+    background: white;
+    z-index: 9;
+    padding: 0.8rem;
+    box-shadow: 0 25px 60px rgba(212,175,55,0.35);
+    animation: dropDown 0.3s ease-out;
+  }
+
+  .multi-select-list.open {
     display: block;
   }
 
-  select, input, textarea {
-    width: 100%;
-    padding: 12px 14px;
-    font-size: 15px;
-    border: 1.5px solid #ddd;
-    border-radius: 12px;
-    background-color: #fefefe;
-    transition: all 0.3s ease;
+  #fareAndButton {
+    transition: margin-top 0.3s ease;
   }
 
-  select:focus, input:focus, textarea:focus {
-    outline: none;
-    border-color: var(--gold);
-    box-shadow: 0 0 0 3px rgba(212,175,55,0.2);
+  .dropdown-open #fareAndButton {
+    margin-top: 320px;
+  }
+
+  @keyframes dropDown {
+    0% { opacity: 0; transform: translateY(-10px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  .multi-select-list::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .multi-select-list::-webkit-scrollbar-track {
+    background: rgba(212,175,55,0.1);
+    border-radius: 10px;
+  }
+
+  .multi-select-list::-webkit-scrollbar-thumb {
+    background: var(--gold);
+    border-radius: 10px;
+  }
+
+  .multi-select-list label {
+    padding: 0.7rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    margin-bottom: 0.3rem;
+    background: white;
+    border: 1px solid transparent;
+  }
+
+  .multi-select-list label:hover {
+    background: linear-gradient(135deg, rgba(212,175,55,0.12), rgba(212,175,55,0.06));
+    transform: translateX(4px);
+    border-color: rgba(212,175,55,0.2);
+  }
+
+  .multi-select-list label input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: var(--gold);
+  }
+
+  .multi-select-list label input[type="checkbox"]:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
   }
 
   .fare-display {
-    background: rgba(212,175,55,0.15);
-    padding: 1rem;
-    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(212,175,55,0.2), rgba(212,175,55,0.1));
+    padding: 1.5rem;
+    border-radius: 20px;
     text-align: center;
-    font-size: 1.1rem;
+    font-size: 1.2rem;
     font-weight: 700;
     color: var(--charcoal);
-    margin: 1.5rem 0;
-    border: 1px solid rgba(212,175,55,0.3);
+    margin: 0 0 1.5rem;
+    border: 2px solid rgba(212,175,55,0.4);
+    animation: fadeInUp 0.8s ease-out 1.2s both;
+    box-shadow: 0 8px 24px rgba(212,175,55,0.15);
   }
 
-  .fare-display strong { color: var(--gold); }
-
-  .ai-recommend {
-    background: linear-gradient(135deg, rgba(212,175,55,0.1), rgba(212,175,55,0.05));
-    padding: 0.8rem;
-    border-radius: 16px;
-    font-size: 0.9rem;
+  .fare-display strong {
     color: var(--gold-dark);
-    text-align: center;
-    margin: 1rem 0;
-    border-left: 4px solid var(--gold);
   }
 
   .btn-golden {
     background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
     color: white;
     border: none;
-    padding: 1.2rem;
+    padding: 1.2rem 2.5rem;
     font-size: 1.1rem;
     font-weight: 700;
     border-radius: 50px;
-    width: 100%;
     text-transform: uppercase;
-    letter-spacing: 1.8px;
-    box-shadow: 0 10px 30px rgba(212,175,55,0.4);
+    letter-spacing: 2px;
+    box-shadow: 0 12px 35px rgba(212,175,55,0.4);
     transition: all 0.5s ease;
-    margin-top: 1.5rem;
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+    width: 100%;
+    cursor: pointer;
+    animation: fadeInUp 0.8s ease-out 1.4s both;
   }
 
-  .btn-golden:hover {
-    transform: translateY(-5px) scale(1.03);
+  .btn-golden::before {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 0; height: 0;
+    background: rgba(255,255,255,0.3);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+    z-index: -1;
+  }
+
+  .btn-golden:hover:not(:disabled) {
+    transform: translateY(-6px) scale(1.03);
     box-shadow: 0 20px 50px rgba(212,175,55,0.5);
+  }
+
+  .btn-golden:active:not(:disabled)::before {
+    width: 400px; height: 400px;
+  }
+
+  .btn-golden:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: 0 8px 20px rgba(212,175,55,0.2);
+  }
+
+  .back-link {
+    text-align: center;
+    margin-top: 1.5rem;
+    animation: fadeInUp 0.8s ease-out 1.6s both;
   }
 
   .back-link a {
     color: var(--gold-dark);
-    font-weight: 600;
     text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
     position: relative;
+    padding-bottom: 2px;
   }
 
   .back-link a::after {
     content: '';
     position: absolute;
-    bottom: -3px;
+    bottom: 0;
     left: 0;
     width: 0;
     height: 2px;
     background: var(--gold);
-    transition: width 0.4s ease;
+    transition: width 0.3s ease;
   }
 
-  .back-link a:hover::after { width: 100%; }
+  .back-link a:hover {
+    color: var(--gold);
+  }
+
+  .back-link a:hover::after {
+    width: 100%;
+  }
 
   @media (max-width: 768px) {
-    .booking-card { padding: 2.5rem; }
+    .booking-card { 
+      padding: 3rem 2rem; 
+      max-width: 90%;
+    }
+    .booking-card h2 { font-size: 2rem; }
+    .route-info { font-size: 0.95rem; padding: 1.2rem; }
+    .fare-display { font-size: 1.1rem; }
   }
 
   @media (max-width: 576px) {
     .booking-section { padding: 4rem 1rem; }
-    .booking-card { padding: 2rem; }
+    .booking-card { 
+      padding: 2.5rem 1.5rem; 
+      border-radius: 28px; 
+    }
+    .booking-card h2 { font-size: 1.8rem; }
+    .route-info { 
+      font-size: 0.9rem; 
+      padding: 1rem;
+      line-height: 1.6;
+    }
+    .btn-golden { 
+      padding: 1rem 2rem; 
+      font-size: 1rem;
+    }
   }
 </style>
 
 <section class="booking-section">
-  <div class="orb" style="width:90px;height:90px;top:10%;left:8%;animation-delay:0s;"></div>
-  <div class="orb" style="width:70px;height:70px;top:75%;right:12%;animation-delay:2s;"></div>
-  <div class="orb" style="width:110px;height:110px;bottom:15%;left:5%;animation-delay:4s;"></div>
+  <div class="orb" style="width:100px;height:100px;top:12%;left:10%;animation-delay:0s;"></div>
+  <div class="orb" style="width:80px;height:80px;top:70%;right:15%;animation-delay:2s;"></div>
+  <div class="orb" style="width:120px;height:120px;bottom:18%;left:8%;animation-delay:4s;"></div>
 
   <div class="booking-card">
     <h2>{{ route.start_location }} to {{ route.end_location }}</h2>
 
     <div class="route-info">
-      <strong>Departure:</strong> {{ route.departure_time }} | <strong>Base Fare:</strong> Rs. {{ route.fare }}
+      <strong>Departure:</strong> {{ route.departure_time }} | 
+      <strong>Base Fare:</strong> Rs. {{ route.fare }}
     </div>
-
-    {% if messages %}
-      <div class="messages">
-        {% for message in messages %}
-          <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-          </div>
-        {% endfor %}
-      </div>
-    {% endif %}
 
     <form method="post" id="booking-form">
       {% csrf_token %}
 
       <!-- Render all fields except seat -->
       {% for field in form %}
-        {% if field.name != 'seat' %}
-          <div class="form-group">
-            {{ field.label_tag }}
-            {{ field }}
-            {% if field.errors %}
-            <small class="text-danger">{{ field.errors|join:", " }}</small>
-            {% endif %}
-          </div>
-        {% endif %}
+      {% if field.name != 'seats' %}
+      <div class="form-group">
+        {{ field.label_tag }} 
+        {{ field }}
+      </div>
+      {% endif %}
       {% endfor %}
 
-      <!-- Custom Seat Dropdown -->
+      <!-- MULTI SELECT Checkbox Seat Dropdown -->
       <div class="form-group">
-        <label for="id_seat">Select Seat</label>
-        <select name="seat" id="id_seat" required>
-          <option value="">---------</option>
-          {% for seat in form.seat.field.queryset %}
-            <option value="{{ seat.id }}"
-                    data-fare="{{ seat.fare }}"
-                    {% if seat.is_booked %}disabled style="color:#ccc;"{% endif %}>
-              {{ seat.seat_number }} 
-              {% if seat.is_booked %}(Booked){% else %}- {{ seat.get_seat_type_display }} (Rs. {{ seat.fare }}){% endif %}
-            </option>
-          {% endfor %}
-        </select>
+        <label>Select Seats</label>
+
+        <div class="multi-select-box">
+          <div class="multi-select-dropdown" id="dropdownText">
+            Select Seats
+          </div>
+
+          <div class="multi-select-list" id="seatList">
+            {% for seat in form.seats.field.queryset %}
+            <label>
+              <span>
+                {{ seat.seat_number }} — {{ seat.get_seat_type_display }} (Rs. {{ seat.fare }})
+                {% if not seat.is_available %}
+                <span style="color:#999; font-style: italic;">(Booked)</span>
+                {% endif %}
+              </span>
+
+              <input
+                type="checkbox"
+                name="seats"
+                value="{{ seat.id }}"
+                data-fare="{{ seat.fare }}"
+                {% if not seat.is_available %}disabled{% endif %}
+              >
+            </label>
+            {% endfor %}
+          </div>
+        </div>
       </div>
 
-      <div class="ai-recommend" id="ai-recommend" style="display:none;">
-        AI suggests: Seat <span id="best-seat"></span> (Best value: Rs. <span id="best-fare"></span>)
-      </div>
+      <div id="fareAndButton">
+        <div class="fare-display">
+          <strong>Total Fare:</strong> 
+          <span id="selected-fare">Select a seat</span>
+        </div>
 
-      <div class="fare-display">
-        <strong>Total Fare:</strong> <span id="selected-fare">  Select a seat</span>
+        <button type="submit" class="btn-golden" id="submit-btn" disabled>
+          <i class="fas fa-check-circle" style="margin-right: 8px;"></i>Confirm & Pay
+        </button>
       </div>
-
-      <button type="submit" class="btn-golden" id="submit-btn" disabled>Confirm & Pay</button>
     </form>
 
-    <p class="back-link text-center mt-3">
-      <a href="{% url 'route_list' %}">Back to Routes</a>
+    <p class="back-link">
+      <a href="{% url 'route_list' %}">
+        <i class="fas fa-arrow-left" style="margin-right: 6px;"></i>Back to Routes
+      </a>
     </p>
   </div>
 </section>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/js/all.min.js"></script>
+
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-  const seatSelect = document.getElementById('id_seat');
-  const fareDisplay = document.getElementById('selected-fare');
-  const submitBtn = document.getElementById('submit-btn');
-  const aiRecommend = document.getElementById('ai-recommend');
-  const bestSeatSpan = document.getElementById('best-seat');
-  const bestFareSpan = document.getElementById('best-fare');
-  const fareInput = document.getElementById('id_fare'); // Django form field (if present)
+document.addEventListener("DOMContentLoaded", function () {
+    const dropdownText = document.getElementById("dropdownText");
+    const seatList = document.getElementById("seatList");
+    const checkboxes = seatList.querySelectorAll("input[type='checkbox']");
+    const fareDisplay = document.getElementById("selected-fare");
+    const fareInput = document.getElementById("id_fare");
+    const submitBtn = document.getElementById("submit-btn");
+    const bookingForm = document.getElementById("booking-form");
 
-  const baseFare = parseFloat('{{ route.fare|floatformat:"2" }}'); // base route fare from backend
-  let bestValue = Infinity;
-  let bestSeatOption = null;
+    const baseFare = parseFloat("{{ route.fare }}");
 
-  // Find best value seat
-  seatSelect.querySelectorAll('option').forEach(option => {
-    if (option.value && !option.disabled) {
-      const fare = parseFloat(option.dataset.fare);
-      if (!isNaN(fare) && fare < bestValue) {
-        bestValue = fare;
-        bestSeatOption = option;
+    // Toggle dropdown list with animation
+    dropdownText.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const isOpen = seatList.classList.contains('open');
+        
+        if (isOpen) {
+            seatList.classList.remove('open');
+            dropdownText.classList.remove("active");
+            bookingForm.classList.remove('dropdown-open');
+        } else {
+            seatList.classList.add('open');
+            dropdownText.classList.add("active");
+            bookingForm.classList.add('dropdown-open');
+        }
+    });
+
+    // Hide dropdown when clicking outside
+    document.addEventListener("click", function (e) {
+        if (!e.target.closest(".multi-select-box")) {
+            seatList.classList.remove('open');
+            dropdownText.classList.remove("active");
+            bookingForm.classList.remove('dropdown-open');
+        }
+    });
+
+    // Update fare when seats checked
+    function updateFare() {
+        let seatTotal = 0;
+        let selectedSeats = [];
+
+        checkboxes.forEach(cb => {
+            if (cb.checked) {
+                seatTotal += parseFloat(cb.dataset.fare);
+                selectedSeats.push(cb.value);
+            }
+        });
+
+        if (selectedSeats.length === 0) {
+            dropdownText.innerHTML = "Select Seats";
+            fareDisplay.innerHTML = "Select a seat";
+            fareInput.value = "";
+            submitBtn.disabled = true;
+            return;
+        }
+
+        dropdownText.innerHTML = `<strong style="color: var(--gold);">${selectedSeats.length} Seat(s) Selected</strong>`;
+
+        const total = baseFare + seatTotal;
+        fareDisplay.innerHTML = 
+            `Base: <span style="color: var(--gold);">Rs. ${baseFare}</span> + Seats: <span style="color: var(--gold);">Rs. ${seatTotal}</span> = <span style="font-size: 1.3rem; color: var(--gold-dark);">Rs. ${total}</span>`;
+
+        fareInput.value = total;
+        submitBtn.disabled = false;
+    }
+
+    checkboxes.forEach(cb =>
+        cb.addEventListener("change", updateFare)
+    );
+
+    // Add ripple effect to button
+    submitBtn.addEventListener('click', function(e) {
+        if (!this.disabled) {
+            const ripple = document.createElement('span');
+            ripple.style.position = 'absolute';
+            ripple.style.borderRadius = '50%';
+            ripple.style.background = 'rgba(255,255,255,0.6)';
+            ripple.style.width = ripple.style.height = '10px';
+            ripple.style.left = `${e.clientX - this.getBoundingClientRect().left}px`;
+            ripple.style.top = `${e.clientY - this.getBoundingClientRect().top}px`;
+            ripple.style.transform = 'scale(0)';
+            ripple.style.animation = 'ripple 0.6s ease-out';
+            this.appendChild(ripple);
+            setTimeout(() => ripple.remove(), 600);
+        }
+    });
+
+    // Add ripple animation
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes ripple {
+        to {
+          transform: scale(20);
+          opacity: 0;
+        }
       }
-    }
-  });
-
-  // Function to update fare display
-  function updateFare(selectedOption) {
-    const seatFare = parseFloat(selectedOption.dataset.fare);
-    if (!isNaN(seatFare)) {
-      const total = baseFare + seatFare;
-      fareDisplay.textContent = `Base: Rs. ${baseFare.toFixed(2)} + Seat: Rs. ${seatFare.toFixed(2)} = Rs. ${total.toFixed(2)}`;
-      if (fareInput) fareInput.value = total.toFixed(2); // Update form field
-      submitBtn.disabled = false;
-      aiRecommend.style.display = 'none';
-    } else {
-      fareDisplay.textContent = 'Select a seat';
-      if (fareInput) fareInput.value = '';
-      submitBtn.disabled = true;
-    }
-  }
-
-  // Update fare when a seat is selected
-  seatSelect.addEventListener('change', function() {
-    const selectedOption = this.options[this.selectedIndex];
-    if (selectedOption.value) {
-      updateFare(selectedOption);
-    } else {
-      fareDisplay.textContent = 'Select a seat';
-      submitBtn.disabled = true;
-    }
-  });
-
-  // Show AI recommendation
-  if (bestSeatOption) {
-    const seatNum = bestSeatOption.textContent.split(' - ')[0].trim();
-    bestSeatSpan.textContent = seatNum;
-    bestFareSpan.textContent = bestValue.toFixed(2);
-    aiRecommend.style.display = 'block';
-
-    // Auto-select best seat after 3 seconds (optional)
-    setTimeout(() => {
-      if (!seatSelect.value && bestSeatOption) {
-        seatSelect.value = bestSeatOption.value;
-        seatSelect.dispatchEvent(new Event('change'));
-      }
-    }, 3000);
-  }
-
-  // Initialize fare if already selected (e.g., returning to page)
-  if (seatSelect.value) {
-    const selectedOption = seatSelect.options[seatSelect.selectedIndex];
-    updateFare(selectedOption);
-  }
-
-  // Prevent form submit without seat
-  document.getElementById('booking-form').addEventListener('submit', function(e) {
-    if (!seatSelect.value) {
-      e.preventDefault();
-      alert('Please select a seat!');
-      return;
-    }
-
-    setTimeout(() => {
-      confetti({
-        particleCount: 150,
-        spread: 70,
-        origin: { y: 0.6 },
-        colors: ['#D4AF37', '#E8C56A', '#B8941F', '#FFD700']
-      });
-    }, 400);
-  });
+    `;
+    document.head.appendChild(style);
 });
 </script>
 
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/js/all.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 {% endblock %}

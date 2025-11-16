@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Contact Admin - Digital Larry Adda{% endblock %}
+
+{% block content %}
+<style>
+  :root {
+    --gold: #D4AF37;
+    --gold-light: #E8C56A;
+    --gold-dark: #B8941F;
+    --cream: #FFFAF0;
+    --charcoal: #2D2D2D;
+    --shadow-soft: 0 15px 40px rgba(212,175,55,0.2);
+    --shadow-hover: 0 30px 80px rgba(212,175,55,0.3);
+  }
+
+  .contact-admin-section {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #fffef7, var(--cream));
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 5rem 1.5rem;
+  }
+
+  .admin-card {
+    width: 100%;
+    max-width: 600px;
+    padding: 3rem;
+    border-radius: 32px;
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(16px);
+    box-shadow: var(--shadow-soft);
+    border: 1px solid rgba(212,175,55,0.25);
+    transition: 0.5s;
+  }
+
+  .admin-card:hover {
+    transform: translateY(-10px);
+    box-shadow: var(--shadow-hover);
+  }
+
+  .admin-card h2 {
+    text-align: center;
+    font-family: 'Playfair Display';
+    font-size: 2.5rem;
+    color: var(--gold-dark);
+    margin-bottom: 2rem;
+  }
+
+  .form-control {
+    width: 100%;
+    padding: 1.1rem;
+    border-radius: 18px;
+    border: 1.5px solid rgba(212,175,55,0.25);
+    margin-bottom: 1.5rem;
+    background: rgba(255,255,255,0.7);
+    transition: .4s;
+  }
+
+  .form-control:focus {
+    border-color: var(--gold);
+    background: white;
+    transform: scale(1.03);
+    box-shadow: 0 10px 30px rgba(212,175,55,0.25);
+  }
+
+  .btn-send {
+    width: 100%;
+    padding: 1.2rem;
+    border-radius: 50px;
+    font-size: 1.1rem;
+    border: none;
+    color: white;
+    cursor: pointer;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    box-shadow: 0 15px 40px rgba(212,175,55,0.4);
+    transition: 0.4s;
+  }
+
+  .btn-send:hover {
+    transform: translateY(-5px) scale(1.05);
+    box-shadow: var(--shadow-hover);
+  }
+
+  /* Toast Styles */
+  #toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 99999;
+  }
+
+  .custom-toast {
+    padding: 15px 22px;
+    margin-top: 10px;
+    border-radius: 12px;
+    color: white;
+    font-weight: 500;
+    min-width: 260px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.25);
+    animation: slideIn .5s ease, fadeOut .5s ease 3.5s forwards;
+  }
+
+  .custom-toast.success {
+    background: linear-gradient(135deg, #28a745, #5cd17e);
+  }
+  .custom-toast.error {
+    background: linear-gradient(135deg, #dc3545, #ff6b81);
+  }
+  .custom-toast.warning {
+    background: linear-gradient(135deg, #ffc107, #ffda6b);
+  }
+  .custom-toast.info {
+    background: linear-gradient(135deg, #007bff, #4da6ff);
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(60px);}
+    to { opacity: 1; transform: translateX(0);}
+  }
+
+  @keyframes fadeOut {
+    to { opacity: 0; transform: translateX(60px);}
+  }
+</style>
+
+<!-- Toast Messages -->
+{% if messages %}
+<div id="toast-container">
+    {% for message in messages %}
+        <div class="custom-toast {{ message.tags }}">
+            <span>{{ message }}</span>
+        </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<section class="contact-admin-section">
+  <div class="admin-card">
+    <h2>Contact Admin</h2>
+
+    <form method="POST">
+      {% csrf_token %}
+
+      <input type="text" name="subject" class="form-control" placeholder="Subject" required>
+
+      <textarea name="message" class="form-control" rows="6" placeholder="Write your message..." required></textarea>
+
+      <button class="btn-send" type="submit">Send Message</button>
+    </form>
+  </div>
+</section>
+
+<script>
+  setTimeout(() => {
+    document.querySelectorAll('.custom-toast').forEach(t => t.remove());
+  }, 4000);
+</script>
+
+{% endblock %}

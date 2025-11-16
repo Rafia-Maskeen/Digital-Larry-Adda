@@ -49,6 +49,12 @@ urlpatterns = [
     path('driver/seats/add/', views.driver_seat_add, name='driver_seat_add'),
     path('driver/seats/<int:seat_id>/edit/', views.driver_seat_edit, name='driver_seat_edit'),
     path('driver/seats/<int:seat_id>/delete/', views.driver_seat_delete, name='driver_seat_delete'),
+    path("contact-admin/", views.contact_admin, name="contact_admin"),
+    path("driver-login/", views.driver_login, name="driver_login"),
+    path("manager-login/", views.manager_login, name="manager_login"),
+
+
+
 
 
 ]

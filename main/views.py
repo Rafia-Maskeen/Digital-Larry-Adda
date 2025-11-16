@@ -12,6 +12,8 @@ from datetime import timedelta
 from django.utils import timezone
 import openai
 import json
+from .models import AdminMessage
+from django.core.mail import send_mail
 from django.core.serializers import serialize
 from django.db.models import F
 from .assistant_engine import handle_transport_query
@@ -69,29 +71,37 @@ def available_vehicles(request):
     routes = Route.objects.filter(start_location__icontains=pickup, end_location__icontains=dropoff)
     return render(request, 'vehicle/available_vehicles.html', {'routes': routes, 'pickup': pickup, 'dropoff': dropoff})
 
-@login_required
 def book_route(request, route_id):
     route = get_object_or_404(Route, id=route_id)
-    if request.method == 'POST':
+
+    if request.method == "POST":
         form = BookingForm(request.POST, route=route)
+
         if form.is_valid():
             booking = form.save(commit=False)
             booking.user = request.user
             booking.route = route
             booking.save()
-            booking.seat.is_available = False
-            booking.seat.save()
-            # Update Route seat counts
-            if booking.seat.seat_type == 'VIP':
-                route.vip_seats = max(0, route.vip_seats - 1)
-            else:
-                route.std_seats = max(0, route.std_seats - 1)
-            route.save()
-            messages.success(request, "Your booking is confirmed!")
-            return redirect('booking_success')
+
+            booking.seats.set(form.cleaned_data["seats"])
+
+            # Mark seats as booked
+            form.cleaned_data["seats"].update(is_available=False)
+
+            messages.success(request, "Booking successful!")
+            return redirect("booking_success")
+
+        else:
+            messages.error(request, "Something went wrong! Check your selection.")
+
     else:
         form = BookingForm(route=route)
-    return render(request, 'routes/book_route.html', {'form': form, 'route': route})
+
+    return render(request, "routes/book_route.html", {
+        'route': route,
+        'form': form
+    })
+
 
 @login_required
 def booking_success(request):
@@ -630,3 +640,78 @@ def driver_seat_delete(request, seat_id):
         return redirect("driver_seat_list")
 
     return render(request, "driver/seat_confirm_delete.html", {"seat": seat})
+
+
+@login_required
+def contact_admin(request):
+    if request.method == "POST":
+        subject = request.POST.get("subject")
+        message = request.POST.get("message")
+
+        # Save message in DB
+        AdminMessage.objects.create(
+            user=request.user,
+            subject=subject,
+            message=message
+        )
+
+        # Optional: Send email to admin
+        try:
+            send_mail(
+                subject=f"New message from {request.user.username}: {subject}",
+                message=message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[settings.ADMIN_EMAIL],
+                fail_silently=True,
+            )
+        except:
+            pass
+
+        messages.success(request, "Your message has been sent to admin.")
+        return redirect("contact_admin")
+
+    return render(request, "home/contact_admin.html")
+
+def driver_login(request):
+    if request.method == "POST":
+        username = request.POST["username"]
+        password = request.POST["password"]
+
+        user = authenticate(request, username=username, password=password)
+
+        if not user:
+            messages.error(request, "Invalid username or password.")
+            return redirect("driver_login")
+
+        # Must be in Driver group
+        if not user.groups.filter(name="Driver").exists():
+            messages.error(request, "Access denied — This login is for Drivers only.")
+            return redirect("driver_login")
+
+        login(request, user)
+        messages.success(request, "Welcome Driver!")
+        return redirect("driver_dashboard")
+
+    return render(request, "auth/driver_login.html")
+
+def manager_login(request):
+    if request.method == "POST":
+        username = request.POST["username"]
+        password = request.POST["password"]
+
+        user = authenticate(request, username=username, password=password)
+
+        if not user:
+            messages.error(request, "Invalid username or password.")
+            return redirect("manager_login")
+
+        # Check Manager group
+        if not user.groups.filter(name="Manager").exists():
+            messages.error(request, "Access denied — Only Managers can login here.")
+            return redirect("manager_login")
+
+        login(request, user)
+        messages.success(request, "Welcome Manager!")
+        return redirect("manager_dashboard")  # Change to your actual dashboard URL
+
+    return render(request, "auth/manager_login.html")

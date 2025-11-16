@@ -7,3 +7,4 @@ class MainConfig(AppConfig):
 
     def ready(self):
         import main.signals  # 👈 یہی لائن signals activate کرتی ہے
+

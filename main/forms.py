@@ -46,20 +46,56 @@ class CustomRegisterForm(UserCreationForm):
         fields = ['username', 'email', 'password1', 'password2']
 
 class BookingForm(forms.ModelForm):
-    seat = forms.ModelChoiceField(queryset=None)
-    fare = forms.DecimalField(max_digits=10, decimal_places=2, required=True, widget=forms.NumberInput(attrs={'class': 'form-control', 'min': 0}))
+    seats = forms.ModelMultipleChoiceField(
+        queryset=None,
+        widget=forms.CheckboxSelectMultiple,
+        required=True
+    )
+    fare = forms.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        required=True,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'min': 0})
+    )
 
     def __init__(self, *args, **kwargs):
         route = kwargs.pop('route', None)
         super().__init__(*args, **kwargs)
+
         if route:
-            self.fields['seat'].queryset = Seat.objects.filter(vehicle=route.vehicle, is_available=True)
-            # Prepopulate fare based on selected seat
-            self.fields['fare'].initial = route.fare  # Optional: Set default fare from route
+            self.route = route
+            self.fields['seats'].queryset = Seat.objects.filter(
+                vehicle=route.vehicle,
+                is_available=True
+            )
+
+            # Default fare is base fare
+            self.fields['fare'].initial = route.fare
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        seats = cleaned_data.get("seats")
+        fare_from_user = cleaned_data.get("fare")
+
+        if not seats:
+            raise forms.ValidationError("Please select at least one seat.")
+
+        # Calculate exact correct fare
+        seat_fare_total = sum(seat.fare for seat in seats)
+        correct_fare = self.route.fare + seat_fare_total
+
+        if fare_from_user != correct_fare:
+            raise forms.ValidationError(
+                f"Fare mismatch! Correct fare is {correct_fare}."
+            )
+
+        return cleaned_data
 
     class Meta:
         model = Booking
-        fields = ['seat', 'fare']
+        fields = ['seats', 'fare']
+
         
 
 class RouteForm(forms.ModelForm):
