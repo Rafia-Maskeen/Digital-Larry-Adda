@@ -24,6 +24,7 @@ class Vehicle(models.Model):
         CustomUser, related_name="manager_vehicles",
         on_delete=models.SET_NULL, null=True
     )
+    image = models.ImageField(upload_to="vehicle_images/", null=True, blank=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='Active')
 
     def __str__(self):
@@ -71,9 +72,11 @@ class Route(models.Model):
 
 class Booking(models.Model):
     STATUS_CHOICES = [
-        ('Confirmed', 'Confirmed'),
-        ('Pending', 'Pending'),
-    ]
+    ('Confirmed', 'Confirmed'),
+    ('Pending', 'Pending'),
+    ('Cancelled', 'Cancelled'),
+]
+
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     route = models.ForeignKey(Route, on_delete=models.CASCADE)
     seats = models.ManyToManyField(Seat)  # ⬅ MULTIPLE SEATS

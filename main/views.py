@@ -11,6 +11,7 @@ from django.http import JsonResponse
 from datetime import timedelta
 from django.utils import timezone
 import openai
+from django.db import transaction
 import json
 from .models import AdminMessage
 from django.core.mail import send_mail
@@ -18,6 +19,8 @@ from django.core.serializers import serialize
 from django.db.models import F
 from .assistant_engine import handle_transport_query
 from django.conf import settings
+from .models import AIInteraction
+from .openrouter_client import ask_openrouter
 from .models import AIInteraction, Vehicle, Route, Seat, Booking, Feedback, Issue, VehicleLocation
 from .forms import CustomLoginForm, CustomRegisterForm, BookingForm,  VehicleForm, RouteForm, SeatForm, VehicleLocationForm, FeedbackForm, IssueForm
 
@@ -65,12 +68,49 @@ def vehicle_detail(request, pk):
         'expected_time': expected_time
     })
 
-def available_vehicles(request):
-    pickup = request.GET.get('pickup')
-    dropoff = request.GET.get('dropoff')
-    routes = Route.objects.filter(start_location__icontains=pickup, end_location__icontains=dropoff)
-    return render(request, 'vehicle/available_vehicles.html', {'routes': routes, 'pickup': pickup, 'dropoff': dropoff})
 
+def available_vehicles(request):
+    pickup = (request.GET.get("pickup") or "").strip()
+    dropoff = (request.GET.get("dropoff") or "").strip()
+    travel_date = request.GET.get("date")  # YYYY-MM-DD
+
+    routes = (
+        Route.objects
+        .select_related("vehicle")
+        .prefetch_related("vehicle__seat_set")
+    )
+
+    if pickup:
+        routes = routes.filter(start_location__icontains=pickup)
+
+    if dropoff:
+        routes = routes.filter(end_location__icontains=dropoff)
+
+    if travel_date:
+        routes = routes.filter(departure_time__date=travel_date)
+    else:
+        # fallback: only future routes
+        routes = routes.filter(departure_time__gte=timezone.now())
+
+    routes = routes.order_by("departure_time")
+
+    for route in routes:
+        route.available_seats = route.vehicle.seat_set.filter(
+            is_available=True
+        ).count()
+
+    return render(
+        request,
+        "vehicle/available_vehicles.html",
+        {
+            "routes": routes,
+            "pickup": pickup,
+            "dropoff": dropoff,
+            "date": travel_date,
+        }
+    )
+
+@login_required
 def book_route(request, route_id):
     route = get_object_or_404(Route, id=route_id)
 
@@ -78,29 +118,61 @@ def book_route(request, route_id):
         form = BookingForm(request.POST, route=route)
 
         if form.is_valid():
-            booking = form.save(commit=False)
-            booking.user = request.user
-            booking.route = route
-            booking.save()
+            try:
+                with transaction.atomic():
+                    # 1️⃣ Create booking
+                    booking = form.save(commit=False)
+                    booking.user = request.user
+                    booking.route = route
+                    booking.status = "Confirmed"
+                    booking.save()
 
-            booking.seats.set(form.cleaned_data["seats"])
+                    # 2️⃣ Attach seats
+                    seats = form.cleaned_data["seats"]
+                    booking.seats.set(seats)
 
-            # Mark seats as booked
-            form.cleaned_data["seats"].update(is_available=False)
+                    # 3️⃣ Mark seats unavailable
+                    seats.update(is_available=False)
 
-            messages.success(request, "Booking successful!")
-            return redirect("booking_success")
+                    # 4️⃣ Send confirmation email
+                    send_mail(
+                        subject="Booking Confirmed – Digital Larry Adda",
+                        message=(
+                            f"Hi {request.user.username},\n\n"
+                            f"Your booking is confirmed!\n\n"
+                            f"Route: {route.start_location} → {route.end_location}\n"
+                            f"Seats: {', '.join(seat.seat_number for seat in seats)}\n"
+                            f"Total Fare: Rs. {booking.fare}\n\n"
+                            f"Thank you for choosing Digital Larry Adda."
+                        ),
+                        from_email=settings.DEFAULT_FROM_EMAIL,
+                        recipient_list=[request.user.email],
+                        fail_silently=True,
+                    )
+
+                messages.success(request, "🎉 Booking confirmed successfully!")
+                return redirect("booking_success")
+
+            except Exception:
+                messages.error(
+                    request,
+                    "Booking failed due to a system error. Please try again."
+                )
 
         else:
-            messages.error(request, "Something went wrong! Check your selection.")
+            messages.error(request, "Invalid booking details. Please check again.")
 
     else:
         form = BookingForm(route=route)
 
-    return render(request, "routes/book_route.html", {
-        'route': route,
-        'form': form
-    })
+    return render(
+        request,
+        "routes/book_route.html",
+        {
+            "route": route,
+            "form": form,
+        }
+    )
 
 
 @login_required
@@ -292,34 +364,46 @@ def issue_delete(request, pk):
 
 @login_required
 def ai_assistant(request):
-    if request.method != 'POST':
-        return JsonResponse({'response': 'Please send your question via POST request.'}, status=405)
+    if request.method != "POST":
+        return JsonResponse(
+            {"response": "Please send your question via POST request."},
+            status=405
+        )
 
+    # 1️⃣ Extract question safely (JSON or form-data)
+    question = ""
     try:
-        data = json.loads(request.body.decode('utf-8') or '{}')
-        question = data.get('question', '').strip()
+        if request.content_type == "application/json":
+            payload = json.loads(request.body.decode("utf-8") or "{}")
+            question = payload.get("question", "").strip()
+        else:
+            question = request.POST.get("question", "").strip()
     except Exception:
-        question = request.POST.get('question', '').strip()
+        question = ""
 
     if not question:
-        return JsonResponse({'response': "Please ask a question about routes, vehicles, or fares."})
+        return JsonResponse({
+            "response": "Please ask a question about routes, vehicles, bookings, or fares."
+        })
 
     try:
-        # 👇 Call your logic function
-        answer = handle_transport_query(question)
+        # 2️⃣ Ask OpenRouter (LLM)
+        answer = ask_openrouter(question)
 
-        # 💾 Log the chat
+        # 3️⃣ Save interaction to DB
         AIInteraction.objects.create(
             user=request.user,
             question=question,
             response=answer
         )
 
-        return JsonResponse({'response': answer})
+        # 4️⃣ Return AI response
+        return JsonResponse({"response": answer})
+
     except Exception as e:
         return JsonResponse({
-            'response': f"⚠️ Sorry, something went wrong: {str(e)}"
-        })
+            "response": "⚠️ AI service is temporarily unavailable. Please try again later."
+        }, status=500)
 
 @login_required
 def manager_dashboard(request):
@@ -344,7 +428,7 @@ def add_update_vehicle(request, pk=None):
     else:
         vehicle = None
     if request.method == 'POST':
-        form = VehicleForm(request.POST, instance=vehicle)
+        form = VehicleForm(request.POST, request.FILES, instance=vehicle)
         if form.is_valid():
             vehicle = form.save(commit=False)
             vehicle.manager = request.user
@@ -715,3 +799,14 @@ def manager_login(request):
         return redirect("manager_dashboard")  # Change to your actual dashboard URL
 
     return render(request, "auth/manager_login.html")
+
+@login_required
+def cancel_booking(request, booking_id):
+    booking = get_object_or_404(Booking, id=booking_id, user=request.user)
+    booking.status = "Cancelled"
+    booking.save()
+
+    booking.seats.update(is_available=True)
+
+    messages.success(request, "Booking cancelled successfully.")
+    return redirect("home")

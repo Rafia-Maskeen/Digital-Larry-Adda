@@ -82,8 +82,8 @@ class BookingForm(forms.ModelForm):
             raise forms.ValidationError("Please select at least one seat.")
 
         # Calculate exact correct fare
-        seat_fare_total = sum(seat.fare for seat in seats)
-        correct_fare = self.route.fare + seat_fare_total
+        correct_fare = self.route.fare * seats.count()
+
 
         if fare_from_user != correct_fare:
             raise forms.ValidationError(
@@ -162,7 +162,7 @@ class IssueForm(forms.ModelForm):
 class VehicleForm(forms.ModelForm):
     class Meta:
         model = Vehicle
-        fields = ['name', 'number_plate', 'driver', 'manager', 'status']
+        fields = ['name', 'number_plate', 'driver', 'manager', 'status', 'image']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'number_plate': forms.TextInput(attrs={'class': 'form-control'}),
@@ -170,6 +170,7 @@ class VehicleForm(forms.ModelForm):
             'manager': forms.Select(attrs={'class': 'form-control'}),
             'status': forms.Select(attrs={'class': 'form-control'}),
         }
+
 
 class VehicleLocationForm(forms.ModelForm):
     class Meta:

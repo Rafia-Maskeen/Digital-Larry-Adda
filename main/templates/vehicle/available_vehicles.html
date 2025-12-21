@@ -1,15 +1,12 @@
-{% extends 'base.html' %}
-{% load static %}
-{% block title %}Available Routes - Digital Larry Adda{% endblock %}
-
-{% block content %}
+{% extends 'base.html' %} {% load static %} {% block title %}Available Routes -
+Digital Larry Adda{% endblock %} {% block content %}
 <style>
   :root {
-    --gold: #D4AF37;
-    --gold-light: #E8C56A;
-    --gold-dark: #B8941F;
-    --cream: #FFFAF0;
-    --charcoal: #2D2D2D;
+    --gold: #d4af37;
+    --gold-light: #e8c56a;
+    --gold-dark: #b8941f;
+    --cream: #fffaf0;
+    --charcoal: #2d2d2d;
     --shadow-soft: 0 18px 55px rgba(212, 175, 55, 0.2);
     --shadow-hover: 0 35px 100px rgba(212, 175, 55, 0.38);
   }
@@ -23,25 +20,44 @@
   }
 
   .routes-section::before {
-    content: '';
+    content: "";
     position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: 
-      radial-gradient(circle at 10% 90%, rgba(212,175,55,0.16) 0%, transparent 50%),
-      radial-gradient(circle at 90% 10%, rgba(212,175,55,0.11) 0%, transparent 50%);
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(
+        circle at 10% 90%,
+        rgba(212, 175, 55, 0.16) 0%,
+        transparent 50%
+      ),
+      radial-gradient(
+        circle at 90% 10%,
+        rgba(212, 175, 55, 0.11) 0%,
+        transparent 50%
+      );
     z-index: 0;
     animation: breathe 14s ease-in-out infinite;
   }
 
   @keyframes breathe {
-    0%, 100% { opacity: 0.7; }
-    50% { opacity: 1; }
+    0%,
+    100% {
+      opacity: 0.7;
+    }
+    50% {
+      opacity: 1;
+    }
   }
 
   .orb {
     position: absolute;
     border-radius: 50%;
-    background: radial-gradient(circle at 30% 30%, var(--gold-light), var(--gold));
+    background: radial-gradient(
+      circle at 30% 30%,
+      var(--gold-light),
+      var(--gold)
+    );
     filter: blur(1.8px);
     opacity: 0;
     pointer-events: none;
@@ -50,8 +66,15 @@
   }
 
   @keyframes floatOrb {
-    0%, 100% { transform: translateY(0) scale(1); opacity: 0.3; }
-    50% { transform: translateY(-55px) scale(1.35); opacity: 0.65; }
+    0%,
+    100% {
+      transform: translateY(0) scale(1);
+      opacity: 0.3;
+    }
+    50% {
+      transform: translateY(-55px) scale(1.35);
+      opacity: 0.65;
+    }
   }
 
   .page-header {
@@ -62,7 +85,7 @@
   }
 
   .page-header h2 {
-    font-family: 'Playfair Display', serif;
+    font-family: "Playfair Display", serif;
     font-size: clamp(2.3rem, 6vw, 3rem);
     background: linear-gradient(135deg, var(--gold), var(--gold-light));
     -webkit-background-clip: text;
@@ -72,8 +95,14 @@
   }
 
   @keyframes fadeInDown {
-    0% { opacity: 0; transform: translateY(-30px); }
-    100% { opacity: 1; transform: translateY(0); }
+    0% {
+      opacity: 0;
+      transform: translateY(-30px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   .page-header p {
@@ -84,8 +113,14 @@
   }
 
   @keyframes fadeInUp {
-    0% { opacity: 0; transform: translateY(20px); }
-    100% { opacity: 1; transform: translateY(0); }
+    0% {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   .route-card {
@@ -94,7 +129,7 @@
     border-radius: 28px;
     overflow: hidden;
     box-shadow: var(--shadow-soft);
-    border: 1.5px solid rgba(212,175,55,0.25);
+    border: 1.5px solid rgba(212, 175, 55, 0.25);
     transition: all 0.6s cubic-bezier(0.25, 0.8, 0.25, 1);
     position: relative;
     z-index: 2;
@@ -103,16 +138,34 @@
     transform: translateY(40px);
   }
 
-  .route-card:nth-child(1) { animation-delay: 0.1s; }
-  .route-card:nth-child(2) { animation-delay: 0.2s; }
-  .route-card:nth-child(3) { animation-delay: 0.3s; }
-  .route-card:nth-child(4) { animation-delay: 0.4s; }
-  .route-card:nth-child(5) { animation-delay: 0.5s; }
-  .route-card:nth-child(6) { animation-delay: 0.6s; }
+  .route-card:nth-child(1) {
+    animation-delay: 0.1s;
+  }
+  .route-card:nth-child(2) {
+    animation-delay: 0.2s;
+  }
+  .route-card:nth-child(3) {
+    animation-delay: 0.3s;
+  }
+  .route-card:nth-child(4) {
+    animation-delay: 0.4s;
+  }
+  .route-card:nth-child(5) {
+    animation-delay: 0.5s;
+  }
+  .route-card:nth-child(6) {
+    animation-delay: 0.6s;
+  }
 
   @keyframes cardRise {
-    0% { opacity: 0; transform: translateY(40px); }
-    100% { opacity: 1; transform: translateY(0); }
+    0% {
+      opacity: 0;
+      transform: translateY(40px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   .route-card:hover {
@@ -137,7 +190,7 @@
   }
 
   .card-title {
-    font-family: 'Playfair Display', serif;
+    font-family: "Playfair Display", serif;
     font-size: 1.5rem;
     margin-bottom: 1rem;
     color: var(--charcoal);
@@ -158,11 +211,11 @@
   }
 
   .vehicle-details {
-    background: rgba(212,175,55,0.1);
+    background: rgba(212, 175, 55, 0.1);
     padding: 1.2rem;
     border-radius: 18px;
     margin: 1.2rem 0;
-    border: 1px dashed rgba(212,175,55,0.3);
+    border: 1px dashed rgba(212, 175, 55, 0.3);
   }
 
   .vehicle-details h6 {
@@ -208,7 +261,7 @@
     border-radius: 50px;
     text-transform: uppercase;
     letter-spacing: 1.5px;
-    box-shadow: 0 8px 25px rgba(212,175,55,0.4);
+    box-shadow: 0 8px 25px rgba(212, 175, 55, 0.4);
     transition: all 0.5s ease;
     position: relative;
     overflow: hidden;
@@ -216,11 +269,13 @@
   }
 
   .btn-golden::before {
-    content: '';
+    content: "";
     position: absolute;
-    top: 50%; left: 50%;
-    width: 0; height: 0;
-    background: rgba(255,255,255,0.3);
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255, 255, 255, 0.3);
     border-radius: 50%;
     transform: translate(-50%, -50%);
     transition: width 0.6s, height 0.6s;
@@ -229,11 +284,12 @@
 
   .btn-golden:hover {
     transform: translateY(-4px) scale(1.05);
-    box-shadow: 0 18px 45px rgba(212,175,55,0.5);
+    box-shadow: 0 18px 45px rgba(212, 175, 55, 0.5);
   }
 
   .btn-golden:active::before {
-    width: 280px; height: 280px;
+    width: 280px;
+    height: 280px;
   }
 
   .empty-state {
@@ -254,80 +310,136 @@
   }
 
   @media (max-width: 992px) {
-    .route-card { margin-bottom: 2rem; }
+    .route-card {
+      margin-bottom: 2rem;
+    }
   }
 
   @media (max-width: 768px) {
-    .routes-section { padding: 5rem 1rem; }
-    .card-body { padding: 1.5rem; }
-    .card-img-top { height: 180px; }
+    .routes-section {
+      padding: 5rem 1rem;
+    }
+    .card-body {
+      padding: 1.5rem;
+    }
+    .card-img-top {
+      height: 180px;
+    }
   }
 
   @media (max-width: 576px) {
-    .page-header h2 { font-size: 2rem; }
-    .card-img-top { height: 160px; }
-    .btn-golden { font-size: 0.9rem; padding: 0.8rem 1.8rem; }
+    .page-header h2 {
+      font-size: 2rem;
+    }
+    .card-img-top {
+      height: 160px;
+    }
+    .btn-golden {
+      font-size: 0.9rem;
+      padding: 0.8rem 1.8rem;
+    }
   }
 </style>
 
 <section class="routes-section">
-  <div class="orb" style="width:95px;height:95px;top:15%;left:8%;animation-delay:0s;"></div>
-  <div class="orb" style="width:75px;height:75px;top:75%;right:10%;animation-delay:2.5s;"></div>
-  <div class="orb" style="width:115px;height:115px;bottom:12%;left:6%;animation-delay:5s;"></div>
+  <div
+    class="orb"
+    style="width: 95px; height: 95px; top: 15%; left: 8%; animation-delay: 0s"
+  ></div>
+  <div
+    class="orb"
+    style="
+      width: 75px;
+      height: 75px;
+      top: 75%;
+      right: 10%;
+      animation-delay: 2.5s;
+    "
+  ></div>
+  <div
+    class="orb"
+    style="
+      width: 115px;
+      height: 115px;
+      bottom: 12%;
+      left: 6%;
+      animation-delay: 5s;
+    "
+  ></div>
 
   <div class="container">
     <div class="page-header">
       <h2>Available Routes</h2>
-      <p>Choose your perfect journey from {{ pickup }} to {{ dropoff }}</p>
+      <p>
+        {{ pickup }} → {{ dropoff }} {% if date %} on
+        <strong>{{ date }}</strong>
+        {% endif %}
+      </p>
     </div>
 
     <div class="row justify-content-center">
       {% for route in routes %}
-        <div class="col-md-6 col-lg-4 mb-4">
-          <div class="route-card">
-            {% if route.image %}
-              <img src="{{ route.image.url }}" class="card-img-top" alt="{{ route.start_location }} to {{ route.end_location }}">
-            {% else %}
-              <img src="{% static 'images/3.jpeg' %}" class="card-img-top" alt="Luxury Bus">
-            {% endif %}
+      <div class="col-md-6 col-lg-4 mb-4">
+        <div class="route-card">
+          {% if route.image %}
+          <img
+            src="{{ route.image.url }}"
+            class="card-img-top"
+            alt="{{ route.start_location }} to {{ route.end_location }}"
+          />
+          {% else %}
+          <img
+            src="{% static 'images/3.jpeg' %}"
+            class="card-img-top"
+            alt="Luxury Bus"
+          />
+          {% endif %}
 
-            <div class="card-body">
-              <h5 class="card-title">
-                {{ route.start_location }} to {{ route.end_location }}
-              </h5>
+          <div class="card-body">
+            <h5 class="card-title">
+              {{ route.start_location }} to {{ route.end_location }}
+            </h5>
 
-              <p class="card-text">
-                <strong>Departure:</strong> {{ route.departure_time|time:"g:i A" }}<br>
-                <strong>Arrival:</strong> {{ route.arrival_time|time:"g:i A" }}<br>
-                <strong>Duration:</strong> {{ route.departure_time|timeuntil:route.arrival_time }}
-              </p>
+            <p class="card-text">
+              <strong>Departure:</strong> {{ route.departure_time|time:"g:i A"}}<br />
+              <strong>Arrival:</strong> {{ route.arrival_time|time:"g:i A" }}<br />
+              <strong>Duration:</strong> {{ route.departure_time|timeuntil:route.arrival_time }}
+            </p>
 
-              <div class="vehicle-details">
-                <h6>Vehicle Info</h6>
-                <ul>
-                  <li><strong>Name:</strong> {{ route.vehicle.name }}</li>
-                  <li><strong>Plate:</strong> {{ route.vehicle.number_plate }}</li>
-                  <li><strong>Seats Left:</strong> 
-                    <span class="seats-left {% if route.available_seats < 5 %}low{% endif %}">
-                      {{ route.available_seats }}
-                    </span>
-                  </li>
-                </ul>
-              </div>
-
-              <a href="{% url 'vehicle_detail' route.vehicle.id %}" class="btn btn-golden">
-                View Details
-              </a>
+            <div class="vehicle-details">
+              <h6>Vehicle Info</h6>
+              <ul>
+                <li><strong>Name:</strong> {{ route.vehicle.name }}</li>
+                <li>
+                  <strong>Plate:</strong> {{ route.vehicle.number_plate }}
+                </li>
+                <li>
+                  <strong>Seats Left:</strong>
+                  <span
+                    class="seats-left {% if route.available_seats < 5 %}low{% endif %}"
+                  >
+                    {{ route.available_seats }}
+                  </span>
+                </li>
+              </ul>
             </div>
+
+            <a
+              href="{% url 'vehicle_detail' route.vehicle.id %}"
+              class="btn btn-golden"
+            >
+              View Details
+            </a>
           </div>
         </div>
+      </div>
       {% empty %}
-        <div class="col-12">
-          <div class="empty-state">
-            <i class="fas fa-bus fa-4x"></i>
-            <p>No routes available right now. Please check back later!</p>
-          </div>
+      <div class="col-12">
+        <div class="empty-state">
+          <i class="fas fa-bus fa-4x"></i>
+          <p>No routes available right now. Please check back later!</p>
         </div>
+      </div>
       {% endfor %}
     </div>
   </div>
@@ -336,35 +448,35 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/js/all.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
+  document.addEventListener("DOMContentLoaded", function () {
     setTimeout(() => {
       confetti({
         particleCount: 60,
         spread: 80,
         origin: { y: 0.3 },
-        colors: ['#D4AF37', '#E8C56A', '#B8941F'],
+        colors: ["#D4AF37", "#E8C56A", "#B8941F"],
         scalar: 0.8,
-        ticks: 100
+        ticks: 100,
       });
     }, 800);
 
-    document.querySelectorAll('.btn-golden').forEach(btn => {
-      btn.addEventListener('click', function(e) {
-        const ripple = document.createElement('span');
-        ripple.style.position = 'absolute';
-        ripple.style.borderRadius = '50%';
-        ripple.style.background = 'rgba(255,255,255,0.6)';
-        ripple.style.transform = 'scale(0)';
-        ripple.style.animation = 'ripple 0.6s ease-out';
+    document.querySelectorAll(".btn-golden").forEach((btn) => {
+      btn.addEventListener("click", function (e) {
+        const ripple = document.createElement("span");
+        ripple.style.position = "absolute";
+        ripple.style.borderRadius = "50%";
+        ripple.style.background = "rgba(255,255,255,0.6)";
+        ripple.style.transform = "scale(0)";
+        ripple.style.animation = "ripple 0.6s ease-out";
         ripple.style.left = `${e.clientX - this.offsetLeft}px`;
         ripple.style.top = `${e.clientY - this.offsetTop}px`;
-        ripple.style.width = ripple.style.height = '12px';
+        ripple.style.width = ripple.style.height = "12px";
         this.appendChild(ripple);
         setTimeout(() => ripple.remove(), 600);
       });
     });
 
-    const style = document.createElement('style');
+    const style = document.createElement("style");
     style.textContent = `
       @keyframes ripple {
         to { transform: scale(18); opacity: 0; }

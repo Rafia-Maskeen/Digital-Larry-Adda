@@ -242,5 +242,4 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'your-email@gmail.com'  # Replace with your Gmail
 EMAIL_HOST_PASSWORD = 'your-app-password'  # Use Gmail App Password (not regular password)
 
-# 👈 NEW: API keys for AI Assistant (OpenAI as example; replace with xAI/Grok if available)
-OPENAI_API_KEY = 'your-openai-api-key-here'  # Get from openai.com; for xAI, use their key/endpoint
+OPENROUTER_API_KEY = "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"

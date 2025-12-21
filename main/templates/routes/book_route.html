@@ -1,15 +1,12 @@
-{% extends 'base.html' %}
-{% load static %}
-{% block title %}Book Route - Digital Larry Adda{% endblock %}
-
-{% block content %}
+{% extends 'base.html' %} {% load static %} {% block title %}Book Route -
+Digital Larry Adda{% endblock %} {% block content %}
 <style>
   :root {
-    --gold: #D4AF37;
-    --gold-light: #E8C56A;
-    --gold-dark: #B8941F;
-    --cream: #FFFAF0;
-    --charcoal: #2D2D2D;
+    --gold: #d4af37;
+    --gold-light: #e8c56a;
+    --gold-dark: #b8941f;
+    --cream: #fffaf0;
+    --charcoal: #2d2d2d;
     --shadow-soft: 0 20px 60px rgba(212, 175, 55, 0.22);
     --shadow-hover: 0 35px 100px rgba(212, 175, 55, 0.45);
   }
@@ -26,25 +23,44 @@
   }
 
   .booking-section::before {
-    content: '';
+    content: "";
     position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: 
-      radial-gradient(circle at 20% 80%, rgba(212,175,55,0.18) 0%, transparent 50%),
-      radial-gradient(circle at 80% 20%, rgba(212,175,55,0.12) 0%, transparent 50%);
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(
+        circle at 20% 80%,
+        rgba(212, 175, 55, 0.18) 0%,
+        transparent 50%
+      ),
+      radial-gradient(
+        circle at 80% 20%,
+        rgba(212, 175, 55, 0.12) 0%,
+        transparent 50%
+      );
     z-index: 0;
     animation: pulseGlow 10s ease-in-out infinite;
   }
 
   @keyframes pulseGlow {
-    0%, 100% { opacity: 0.6; }
-    50% { opacity: 1; }
+    0%,
+    100% {
+      opacity: 0.6;
+    }
+    50% {
+      opacity: 1;
+    }
   }
 
   .orb {
     position: absolute;
     border-radius: 50%;
-    background: radial-gradient(circle at 30% 30%, var(--gold-light), var(--gold));
+    background: radial-gradient(
+      circle at 30% 30%,
+      var(--gold-light),
+      var(--gold)
+    );
     filter: blur(2px);
     opacity: 0;
     pointer-events: none;
@@ -53,8 +69,15 @@
   }
 
   @keyframes floatOrb {
-    0%, 100% { transform: translateY(0) scale(1); opacity: 0.3; }
-    50% { transform: translateY(-60px) scale(1.4); opacity: 0.7; }
+    0%,
+    100% {
+      transform: translateY(0) scale(1);
+      opacity: 0.3;
+    }
+    50% {
+      transform: translateY(-60px) scale(1.4);
+      opacity: 0.7;
+    }
   }
 
   .booking-card {
@@ -65,8 +88,8 @@
     padding: 4rem 3rem;
     max-width: 700px;
     width: 100%;
-    box-shadow: var(--shadow-soft), inset 0 0 50px rgba(212,175,55,0.12);
-    border: 2px solid rgba(212,175,55,0.3);
+    box-shadow: var(--shadow-soft), inset 0 0 50px rgba(212, 175, 55, 0.12);
+    border: 2px solid rgba(212, 175, 55, 0.3);
     position: relative;
     z-index: 2;
     transition: all 0.7s cubic-bezier(0.25, 0.8, 0.25, 1);
@@ -74,8 +97,14 @@
   }
 
   @keyframes riseIn {
-    0% { opacity: 0; transform: translateY(40px) scale(0.95); }
-    100% { opacity: 1; transform: translateY(0) scale(1); }
+    0% {
+      opacity: 0;
+      transform: translateY(40px) scale(0.95);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
   }
 
   .booking-card:hover {
@@ -85,7 +114,7 @@
   }
 
   .booking-card h2 {
-    font-family: 'Playfair Display', serif;
+    font-family: "Playfair Display", serif;
     font-size: clamp(2rem, 5vw, 2.8rem);
     text-align: center;
     margin-bottom: 1.5rem;
@@ -96,38 +125,57 @@
   }
 
   @keyframes fadeInUp {
-    0% { opacity: 0; transform: translateY(20px); }
-    100% { opacity: 1; transform: translateY(0); }
+    0% {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   .route-info {
-    background: linear-gradient(135deg, rgba(212,175,55,0.15), rgba(212,175,55,0.08));
+    background: linear-gradient(
+      135deg,
+      rgba(212, 175, 55, 0.15),
+      rgba(212, 175, 55, 0.08)
+    );
     padding: 1.5rem;
     border-radius: 24px;
     margin-bottom: 2.5rem;
     text-align: center;
     font-size: 1.05rem;
     color: var(--charcoal);
-    border: 1.5px solid rgba(212,175,55,0.35);
+    border: 1.5px solid rgba(212, 175, 55, 0.35);
     animation: fadeInUp 0.8s ease-out 0.5s both;
     position: relative;
     overflow: hidden;
   }
 
   .route-info::before {
-    content: '';
+    content: "";
     position: absolute;
     top: -50%;
     left: -50%;
     width: 200%;
     height: 200%;
-    background: linear-gradient(45deg, transparent, rgba(255,255,255,0.3), transparent);
+    background: linear-gradient(
+      45deg,
+      transparent,
+      rgba(255, 255, 255, 0.3),
+      transparent
+    );
     animation: shimmer 3s infinite;
   }
 
   @keyframes shimmer {
-    0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
-    100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+    0% {
+      transform: translateX(-100%) translateY(-100%) rotate(45deg);
+    }
+    100% {
+      transform: translateX(100%) translateY(100%) rotate(45deg);
+    }
   }
 
   .route-info strong {
@@ -140,10 +188,18 @@
     animation: fadeInUp 0.8s ease-out calc(0.7s + var(--delay)) both;
   }
 
-  .form-group:nth-child(1) { --delay: 0s; }
-  .form-group:nth-child(2) { --delay: 0.1s; }
-  .form-group:nth-child(3) { --delay: 0.2s; }
-  .form-group:nth-child(4) { --delay: 0.3s; }
+  .form-group:nth-child(1) {
+    --delay: 0s;
+  }
+  .form-group:nth-child(2) {
+    --delay: 0.1s;
+  }
+  .form-group:nth-child(3) {
+    --delay: 0.2s;
+  }
+  .form-group:nth-child(4) {
+    --delay: 0.3s;
+  }
 
   .form-group label {
     font-weight: 700;
@@ -159,10 +215,10 @@
   .form-group textarea {
     width: 100%;
     padding: 0.9rem 1.2rem;
-    border: 2px solid rgba(212,175,55,0.25);
+    border: 2px solid rgba(212, 175, 55, 0.25);
     border-radius: 16px;
     font-size: 1rem;
-    background: rgba(255,255,255,0.8);
+    background: rgba(255, 255, 255, 0.8);
     transition: all 0.4s ease;
     color: var(--charcoal);
   }
@@ -173,7 +229,7 @@
     outline: none;
     border-color: var(--gold);
     background: white;
-    box-shadow: 0 0 0 4px rgba(212,175,55,0.15);
+    box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.15);
     transform: translateY(-2px);
   }
 
@@ -184,11 +240,11 @@
   }
 
   .multi-select-dropdown {
-    border: 2px solid rgba(212,175,55,0.25);
+    border: 2px solid rgba(212, 175, 55, 0.25);
     border-radius: 16px;
     padding: 0.9rem 1.2rem;
     cursor: pointer;
-    background: rgba(255,255,255,0.8);
+    background: rgba(255, 255, 255, 0.8);
     transition: all 0.4s ease;
     display: flex;
     align-items: center;
@@ -198,7 +254,7 @@
   }
 
   .multi-select-dropdown::after {
-    content: '▼';
+    content: "▼";
     font-size: 0.8rem;
     color: var(--gold);
     transition: transform 0.3s ease;
@@ -207,7 +263,7 @@
   .multi-select-dropdown.active {
     border-color: var(--gold);
     background: white;
-    box-shadow: 0 4px 12px rgba(212,175,55,0.2);
+    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2);
   }
 
   .multi-select-dropdown.active::after {
@@ -218,7 +274,7 @@
     border-color: var(--gold);
     background: white;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(212,175,55,0.2);
+    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2);
   }
 
   .multi-select-list {
@@ -229,12 +285,12 @@
     right: 0;
     max-height: 300px;
     overflow-y: auto;
-    border: 2px solid rgba(212,175,55,0.3);
+    border: 2px solid rgba(212, 175, 55, 0.3);
     border-radius: 16px;
     background: white;
     z-index: 9;
     padding: 0.8rem;
-    box-shadow: 0 25px 60px rgba(212,175,55,0.35);
+    box-shadow: 0 25px 60px rgba(212, 175, 55, 0.35);
     animation: dropDown 0.3s ease-out;
   }
 
@@ -251,8 +307,14 @@
   }
 
   @keyframes dropDown {
-    0% { opacity: 0; transform: translateY(-10px); }
-    100% { opacity: 1; transform: translateY(0); }
+    0% {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   .multi-select-list::-webkit-scrollbar {
@@ -260,7 +322,7 @@
   }
 
   .multi-select-list::-webkit-scrollbar-track {
-    background: rgba(212,175,55,0.1);
+    background: rgba(212, 175, 55, 0.1);
     border-radius: 10px;
   }
 
@@ -283,9 +345,13 @@
   }
 
   .multi-select-list label:hover {
-    background: linear-gradient(135deg, rgba(212,175,55,0.12), rgba(212,175,55,0.06));
+    background: linear-gradient(
+      135deg,
+      rgba(212, 175, 55, 0.12),
+      rgba(212, 175, 55, 0.06)
+    );
     transform: translateX(4px);
-    border-color: rgba(212,175,55,0.2);
+    border-color: rgba(212, 175, 55, 0.2);
   }
 
   .multi-select-list label input[type="checkbox"] {
@@ -301,7 +367,11 @@
   }
 
   .fare-display {
-    background: linear-gradient(135deg, rgba(212,175,55,0.2), rgba(212,175,55,0.1));
+    background: linear-gradient(
+      135deg,
+      rgba(212, 175, 55, 0.2),
+      rgba(212, 175, 55, 0.1)
+    );
     padding: 1.5rem;
     border-radius: 20px;
     text-align: center;
@@ -309,9 +379,9 @@
     font-weight: 700;
     color: var(--charcoal);
     margin: 0 0 1.5rem;
-    border: 2px solid rgba(212,175,55,0.4);
+    border: 2px solid rgba(212, 175, 55, 0.4);
     animation: fadeInUp 0.8s ease-out 1.2s both;
-    box-shadow: 0 8px 24px rgba(212,175,55,0.15);
+    box-shadow: 0 8px 24px rgba(212, 175, 55, 0.15);
   }
 
   .fare-display strong {
@@ -328,7 +398,7 @@
     border-radius: 50px;
     text-transform: uppercase;
     letter-spacing: 2px;
-    box-shadow: 0 12px 35px rgba(212,175,55,0.4);
+    box-shadow: 0 12px 35px rgba(212, 175, 55, 0.4);
     transition: all 0.5s ease;
     position: relative;
     overflow: hidden;
@@ -339,11 +409,13 @@
   }
 
   .btn-golden::before {
-    content: '';
+    content: "";
     position: absolute;
-    top: 50%; left: 50%;
-    width: 0; height: 0;
-    background: rgba(255,255,255,0.3);
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255, 255, 255, 0.3);
     border-radius: 50%;
     transform: translate(-50%, -50%);
     transition: width 0.6s, height 0.6s;
@@ -352,18 +424,19 @@
 
   .btn-golden:hover:not(:disabled) {
     transform: translateY(-6px) scale(1.03);
-    box-shadow: 0 20px 50px rgba(212,175,55,0.5);
+    box-shadow: 0 20px 50px rgba(212, 175, 55, 0.5);
   }
 
   .btn-golden:active:not(:disabled)::before {
-    width: 400px; height: 400px;
+    width: 400px;
+    height: 400px;
   }
 
   .btn-golden:disabled {
     opacity: 0.5;
     cursor: not-allowed;
     transform: none;
-    box-shadow: 0 8px 20px rgba(212,175,55,0.2);
+    box-shadow: 0 8px 20px rgba(212, 175, 55, 0.2);
   }
 
   .back-link {
@@ -383,7 +456,7 @@
   }
 
   .back-link a::after {
-    content: '';
+    content: "";
     position: absolute;
     bottom: 0;
     left: 0;
@@ -402,59 +475,86 @@
   }
 
   @media (max-width: 768px) {
-    .booking-card { 
-      padding: 3rem 2rem; 
+    .booking-card {
+      padding: 3rem 2rem;
       max-width: 90%;
     }
-    .booking-card h2 { font-size: 2rem; }
-    .route-info { font-size: 0.95rem; padding: 1.2rem; }
-    .fare-display { font-size: 1.1rem; }
+    .booking-card h2 {
+      font-size: 2rem;
+    }
+    .route-info {
+      font-size: 0.95rem;
+      padding: 1.2rem;
+    }
+    .fare-display {
+      font-size: 1.1rem;
+    }
   }
 
   @media (max-width: 576px) {
-    .booking-section { padding: 4rem 1rem; }
-    .booking-card { 
-      padding: 2.5rem 1.5rem; 
-      border-radius: 28px; 
+    .booking-section {
+      padding: 4rem 1rem;
     }
-    .booking-card h2 { font-size: 1.8rem; }
-    .route-info { 
-      font-size: 0.9rem; 
+    .booking-card {
+      padding: 2.5rem 1.5rem;
+      border-radius: 28px;
+    }
+    .booking-card h2 {
+      font-size: 1.8rem;
+    }
+    .route-info {
+      font-size: 0.9rem;
       padding: 1rem;
       line-height: 1.6;
     }
-    .btn-golden { 
-      padding: 1rem 2rem; 
+    .btn-golden {
+      padding: 1rem 2rem;
       font-size: 1rem;
     }
   }
 </style>
 
 <section class="booking-section">
-  <div class="orb" style="width:100px;height:100px;top:12%;left:10%;animation-delay:0s;"></div>
-  <div class="orb" style="width:80px;height:80px;top:70%;right:15%;animation-delay:2s;"></div>
-  <div class="orb" style="width:120px;height:120px;bottom:18%;left:8%;animation-delay:4s;"></div>
+  <div
+    class="orb"
+    style="
+      width: 100px;
+      height: 100px;
+      top: 12%;
+      left: 10%;
+      animation-delay: 0s;
+    "
+  ></div>
+  <div
+    class="orb"
+    style="width: 80px; height: 80px; top: 70%; right: 15%; animation-delay: 2s"
+  ></div>
+  <div
+    class="orb"
+    style="
+      width: 120px;
+      height: 120px;
+      bottom: 18%;
+      left: 8%;
+      animation-delay: 4s;
+    "
+  ></div>
 
   <div class="booking-card">
     <h2>{{ route.start_location }} to {{ route.end_location }}</h2>
 
     <div class="route-info">
-      <strong>Departure:</strong> {{ route.departure_time }} | 
-      <strong>Base Fare:</strong> Rs. {{ route.fare }}
+      <strong>Departure:</strong> {{ route.departure_time }} |
+      <strong>Fare per Seat:</strong> Rs. {{ route.fare }}
     </div>
 
     <form method="post" id="booking-form">
       {% csrf_token %}
 
       <!-- Render all fields except seat -->
-      {% for field in form %}
-      {% if field.name != 'seats' %}
-      <div class="form-group">
-        {{ field.label_tag }} 
-        {{ field }}
-      </div>
-      {% endif %}
-      {% endfor %}
+      {% for field in form %} {% if field.name != 'seats' %}
+      <div class="form-group">{{ field.label_tag }} {{ field }}</div>
+      {% endif %} {% endfor %}
 
       <!-- MULTI SELECT Checkbox Seat Dropdown -->
       <div class="form-group">
@@ -469,9 +569,9 @@
             {% for seat in form.seats.field.queryset %}
             <label>
               <span>
-                {{ seat.seat_number }} — {{ seat.get_seat_type_display }} (Rs. {{ seat.fare }})
-                {% if not seat.is_available %}
-                <span style="color:#999; font-style: italic;">(Booked)</span>
+                {{ seat.seat_number }} — {{ seat.get_seat_type_display }} {% if
+                not seat.is_available %}
+                <span style="color: #999; font-style: italic">(Booked)</span>
                 {% endif %}
               </span>
 
@@ -479,10 +579,19 @@
                 type="checkbox"
                 name="seats"
                 value="{{ seat.id }}"
-                data-fare="{{ seat.fare }}"
-                {% if not seat.is_available %}disabled{% endif %}
-              >
+                {%
+                if
+                not
+                seat.is_available
+                %}
+                disabled
+                {%
+                endif
+                %}
+              />
             </label>
+            <input type="hidden" name="fare" id="id_fare" />
+
             {% endfor %}
           </div>
         </div>
@@ -490,19 +599,26 @@
 
       <div id="fareAndButton">
         <div class="fare-display">
-          <strong>Total Fare:</strong> 
+          <strong>Total Fare:</strong>
           <span id="selected-fare">Select a seat</span>
         </div>
 
-        <button type="submit" class="btn-golden" id="submit-btn" disabled>
-          <i class="fas fa-check-circle" style="margin-right: 8px;"></i>Confirm & Pay
+        <button
+          type="submit"
+          class="btn-golden"
+          id="submit-btn"
+          disabled
+        >
+          <i class="fas fa-check-circle" style="margin-right: 8px"></i>Confirm &
+          Pay
         </button>
       </div>
     </form>
 
     <p class="back-link">
       <a href="{% url 'route_list' %}">
-        <i class="fas fa-arrow-left" style="margin-right: 6px;"></i>Back to Routes
+        <i class="fas fa-arrow-left" style="margin-right: 6px"></i>Back to
+        Routes
       </a>
     </p>
   </div>
@@ -511,7 +627,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/js/all.min.js"></script>
 
 <script>
-document.addEventListener("DOMContentLoaded", function () {
+  document.addEventListener("DOMContentLoaded", function () {
     const dropdownText = document.getElementById("dropdownText");
     const seatList = document.getElementById("seatList");
     const checkboxes = seatList.querySelectorAll("input[type='checkbox']");
@@ -520,96 +636,53 @@ document.addEventListener("DOMContentLoaded", function () {
     const submitBtn = document.getElementById("submit-btn");
     const bookingForm = document.getElementById("booking-form");
 
-    const baseFare = parseFloat("{{ route.fare }}");
+    const farePerSeat = parseFloat("{{ route.fare }}");
 
-    // Toggle dropdown list with animation
+    // Toggle dropdown
     dropdownText.addEventListener("click", (e) => {
-        e.stopPropagation();
-        const isOpen = seatList.classList.contains('open');
-        
-        if (isOpen) {
-            seatList.classList.remove('open');
-            dropdownText.classList.remove("active");
-            bookingForm.classList.remove('dropdown-open');
-        } else {
-            seatList.classList.add('open');
-            dropdownText.classList.add("active");
-            bookingForm.classList.add('dropdown-open');
-        }
+      e.stopPropagation();
+      seatList.classList.toggle("open");
+      dropdownText.classList.toggle("active");
+      bookingForm.classList.toggle("dropdown-open");
     });
 
-    // Hide dropdown when clicking outside
     document.addEventListener("click", function (e) {
-        if (!e.target.closest(".multi-select-box")) {
-            seatList.classList.remove('open');
-            dropdownText.classList.remove("active");
-            bookingForm.classList.remove('dropdown-open');
-        }
+      if (!e.target.closest(".multi-select-box")) {
+        seatList.classList.remove("open");
+        dropdownText.classList.remove("active");
+        bookingForm.classList.remove("dropdown-open");
+      }
     });
 
-    // Update fare when seats checked
     function updateFare() {
-        let seatTotal = 0;
-        let selectedSeats = [];
+      let selectedCount = 0;
 
-        checkboxes.forEach(cb => {
-            if (cb.checked) {
-                seatTotal += parseFloat(cb.dataset.fare);
-                selectedSeats.push(cb.value);
-            }
-        });
+      checkboxes.forEach((cb) => {
+        if (cb.checked) selectedCount++;
+      });
 
-        if (selectedSeats.length === 0) {
-            dropdownText.innerHTML = "Select Seats";
-            fareDisplay.innerHTML = "Select a seat";
-            fareInput.value = "";
-            submitBtn.disabled = true;
-            return;
-        }
+      if (selectedCount === 0) {
+        dropdownText.innerHTML = "Select Seats";
+        fareDisplay.innerHTML = "Select seats";
+        fareInput.value = "";
+        submitBtn.disabled = true;
+        return;
+      }
 
-        dropdownText.innerHTML = `<strong style="color: var(--gold);">${selectedSeats.length} Seat(s) Selected</strong>`;
+      const total = farePerSeat * selectedCount;
 
-        const total = baseFare + seatTotal;
-        fareDisplay.innerHTML = 
-            `Base: <span style="color: var(--gold);">Rs. ${baseFare}</span> + Seats: <span style="color: var(--gold);">Rs. ${seatTotal}</span> = <span style="font-size: 1.3rem; color: var(--gold-dark);">Rs. ${total}</span>`;
+      dropdownText.innerHTML = `<strong style="color: var(--gold);">${selectedCount} Seat(s) Selected</strong>`;
 
-        fareInput.value = total;
-        submitBtn.disabled = false;
+      fareDisplay.innerHTML = `<span style="font-size:1.3rem;color:var(--gold-dark);">
+              Rs. ${total}
+            </span>`;
+
+      fareInput.value = total;
+      submitBtn.disabled = false;
     }
 
-    checkboxes.forEach(cb =>
-        cb.addEventListener("change", updateFare)
-    );
-
-    // Add ripple effect to button
-    submitBtn.addEventListener('click', function(e) {
-        if (!this.disabled) {
-            const ripple = document.createElement('span');
-            ripple.style.position = 'absolute';
-            ripple.style.borderRadius = '50%';
-            ripple.style.background = 'rgba(255,255,255,0.6)';
-            ripple.style.width = ripple.style.height = '10px';
-            ripple.style.left = `${e.clientX - this.getBoundingClientRect().left}px`;
-            ripple.style.top = `${e.clientY - this.getBoundingClientRect().top}px`;
-            ripple.style.transform = 'scale(0)';
-            ripple.style.animation = 'ripple 0.6s ease-out';
-            this.appendChild(ripple);
-            setTimeout(() => ripple.remove(), 600);
-        }
-    });
-
-    // Add ripple animation
-    const style = document.createElement('style');
-    style.textContent = `
-      @keyframes ripple {
-        to {
-          transform: scale(20);
-          opacity: 0;
-        }
-      }
-    `;
-    document.head.appendChild(style);
-});
+    checkboxes.forEach((cb) => cb.addEventListener("change", updateFare));
+  });
 </script>
 
 {% endblock %}
