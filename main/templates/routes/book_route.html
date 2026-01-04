@@ -569,8 +569,8 @@ Digital Larry Adda{% endblock %} {% block content %}
             {% for seat in form.seats.field.queryset %}
             <label>
               <span>
-                {{ seat.seat_number }} — {{ seat.get_seat_type_display }} {% if
-                not seat.is_available %}
+                {{ seat.seat_number }} — {{ seat.get_seat_type_display }} 
+                {% if not seat.is_available %}
                 <span style="color: #999; font-style: italic">(Booked)</span>
                 {% endif %}
               </span>
@@ -579,18 +579,9 @@ Digital Larry Adda{% endblock %} {% block content %}
                 type="checkbox"
                 name="seats"
                 value="{{ seat.id }}"
-                {%
-                if
-                not
-                seat.is_available
-                %}
-                disabled
-                {%
-                endif
-                %}
+                {% if not seat.is_available %} disabled {% endif %}
               />
             </label>
-            <input type="hidden" name="fare" id="id_fare" />
 
             {% endfor %}
           </div>
@@ -653,33 +644,35 @@ Digital Larry Adda{% endblock %} {% block content %}
         bookingForm.classList.remove("dropdown-open");
       }
     });
+function updateFare() {
+  let selectedCount = 0;
 
-    function updateFare() {
-      let selectedCount = 0;
+  checkboxes.forEach((cb) => {
+    if (cb.checked) selectedCount++;
+  });
 
-      checkboxes.forEach((cb) => {
-        if (cb.checked) selectedCount++;
-      });
+  if (selectedCount === 0) {
+    dropdownText.innerHTML = "Select Seats";
+    fareDisplay.innerHTML = "Select seats";
+    submitBtn.disabled = true;
+    return;
+  }
 
-      if (selectedCount === 0) {
-        dropdownText.innerHTML = "Select Seats";
-        fareDisplay.innerHTML = "Select seats";
-        fareInput.value = "";
-        submitBtn.disabled = true;
-        return;
-      }
+  const total = farePerSeat * selectedCount;
 
-      const total = farePerSeat * selectedCount;
+  dropdownText.innerHTML =
+    `<strong style="color: var(--gold);">
+      ${selectedCount} Seat(s) Selected
+     </strong>`;
 
-      dropdownText.innerHTML = `<strong style="color: var(--gold);">${selectedCount} Seat(s) Selected</strong>`;
+  fareDisplay.innerHTML =
+    `<span style="font-size:1.3rem;color:var(--gold-dark);">
+      Rs. ${total}
+     </span>`;
 
-      fareDisplay.innerHTML = `<span style="font-size:1.3rem;color:var(--gold-dark);">
-              Rs. ${total}
-            </span>`;
+  submitBtn.disabled = false;
+}
 
-      fareInput.value = total;
-      submitBtn.disabled = false;
-    }
 
     checkboxes.forEach((cb) => cb.addEventListener("change", updateFare));
   });

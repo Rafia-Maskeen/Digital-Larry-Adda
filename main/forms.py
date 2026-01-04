@@ -47,16 +47,14 @@ class CustomRegisterForm(UserCreationForm):
 
 class BookingForm(forms.ModelForm):
     seats = forms.ModelMultipleChoiceField(
-        queryset=None,
+        queryset=Seat.objects.none(),
         widget=forms.CheckboxSelectMultiple,
         required=True
     )
-    fare = forms.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        required=True,
-        widget=forms.NumberInput(attrs={'class': 'form-control', 'min': 0})
-    )
+
+    class Meta:
+        model = Booking
+        fields = ['seats']  # 🔥 REMOVE fare COMPLETELY
 
     def __init__(self, *args, **kwargs):
         route = kwargs.pop('route', None)
@@ -69,32 +67,13 @@ class BookingForm(forms.ModelForm):
                 is_available=True
             )
 
-            # Default fare is base fare
-            self.fields['fare'].initial = route.fare
-
-    def clean(self):
-        cleaned_data = super().clean()
-
-        seats = cleaned_data.get("seats")
-        fare_from_user = cleaned_data.get("fare")
+    def clean_seats(self):
+        seats = self.cleaned_data.get("seats")
 
         if not seats:
             raise forms.ValidationError("Please select at least one seat.")
 
-        # Calculate exact correct fare
-        correct_fare = self.route.fare * seats.count()
-
-
-        if fare_from_user != correct_fare:
-            raise forms.ValidationError(
-                f"Fare mismatch! Correct fare is {correct_fare}."
-            )
-
-        return cleaned_data
-
-    class Meta:
-        model = Booking
-        fields = ['seats', 'fare']
+        return seats
 
         
 
