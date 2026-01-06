@@ -12,9 +12,23 @@ def ask_openrouter(prompt: str) -> str:
     }
 
     payload = {
-        "model": "mistralai/mistral-7b-instruct",
+        "model": "openai/gpt-4o-mini",
         "messages": [
-            {"role": "system", "content": "You are a transport assistant for Digital Larry Adda."},
+            {
+  "role": "system",
+  "content": (
+    "You are Digital Larry Adda's transport assistant.\n"
+    "RULES:\n"
+    "- ONLY answer transport-related questions (routes, buses, fares, schedules).\n"
+    "- If exact data is not available, clearly say you do not have the information.\n"
+    "- NEVER guess fares, times, or routes.\n"
+    "- NEVER invent prices or locations.\n"
+    "- Keep answers short, clear, and factual.\n"
+    "- Do NOT include system tokens, markdown, [INST], <s>, or explanations.\n"
+    "- Respond in plain text only."
+  )
+},
+
             {"role": "user", "content": prompt}
         ],
         "temperature": 0.7,
@@ -36,4 +50,9 @@ def ask_openrouter(prompt: str) -> str:
     if "choices" not in data or not data["choices"]:
         raise Exception(f"Invalid OpenRouter response: {data}")
 
-    return data["choices"][0]["message"]["content"]
+    content = data["choices"][0]["message"]["content"]
+
+# 🔥 Clean junk tokens from Mistral-style models
+    content = content.replace("[INST]", "").replace("</s>", "").replace("<s>", "").strip()
+
+    return content

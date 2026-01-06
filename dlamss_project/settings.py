@@ -235,11 +235,12 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 # 👈 NEW: Email config for notifications (vehicle breakdown)
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'  # Or your SMTP host
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'your-email@gmail.com'  # Replace with your Gmail
-EMAIL_HOST_PASSWORD = 'your-app-password'  # Use Gmail App Password (not regular password)
+EMAIL_HOST_USER = "rafiamaskeen@gmail.com"
+EMAIL_HOST_PASSWORD = "wmfy jooq pcyy zpdy"
+DEFAULT_FROM_EMAIL = "DigitalLarryAdda <rafiamaskeen@gmail.com>" # Use Gmail App Password (not regular password)
 
 OPENROUTER_API_KEY = "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"
