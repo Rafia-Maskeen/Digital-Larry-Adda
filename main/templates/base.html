@@ -233,7 +233,7 @@
             {% if user.groups.all.0.name == 'Passenger' %}
               <a href="{% url 'contact' %}">Swift Ride</a>
               <a href="{% url 'find_ride' %}">Find Ride</a>
-              <a href="{% url 'chatbot' %}">AI Assistant</a>
+              {% comment %} <a href="{% url 'chatbot' %}">AI Assistant</a> {% endcomment %}
               <div class="dropdown" onmouseenter="showDropdown(this)" onmouseleave="hideDropdown(this)">
                 <div class="dropbtn">Feedback & Issues <i class="fas fa-chevron-down"></i></div>
                 <div class="dropdown-content">
