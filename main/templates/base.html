@@ -161,20 +161,7 @@
         color: white;
       }
 
-      .logout-btn {
-        background: linear-gradient(45deg, var(--gold), var(--gold-light));
-        color: white;
-        border: none;
-        padding: 0.6rem 1.2rem;
-        font-weight: 600;
-        border-radius: 30px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-      }
-
-      .logout-btn:hover {
-        transform: translateY(-2px);
-      }
+  .logout-btn { background: linear-gradient(45deg, var(--gold), var(--gold-light)); color: white; border: none; padding: 0.6rem 1.2rem; font-weight: 600; border-radius: 30px; cursor: pointer; transition: all 0.3s ease; } .logout-btn:hover { transform: translateY(-2px); }
 
       main {
         min-height: 70vh;
@@ -190,6 +177,164 @@
         text-align: center;
         color: #666;
         font-size: 0.9rem;
+      }
+
+      /* ============================================ */
+      /* N8N CHATBOT CUSTOM STYLING */
+      /* ============================================ */
+      
+      /* Chat widget container positioning */
+      #n8n-chat {
+        position: fixed !important;
+        bottom: 20px !important;
+        right: 20px !important;
+        z-index: 9999 !important;
+      }
+
+      /* Chat button styling - more refined */
+      .chat-button {
+        background: linear-gradient(135deg, var(--gold), var(--gold-light)) !important;
+        box-shadow: 0 4px 16px rgba(212, 175, 55, 0.25) !important;
+        border-radius: 50% !important;
+        width: 56px !important;
+        height: 56px !important;
+        transition: all 0.3s ease !important;
+      }
+
+      .chat-button:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 8px 24px rgba(212, 175, 55, 0.35) !important;
+      }
+
+      /* Chat window styling - cleaner look */
+      .chat-window {
+        border-radius: 16px !important;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12) !important;
+        border: 1px solid rgba(212, 175, 55, 0.2) !important;
+        overflow: hidden !important;
+        font-family: "Inter", sans-serif !important;
+        max-width: 380px !important;
+      }
+
+      /* Chat header - subtler */
+      .chat-header {
+        background: linear-gradient(135deg, var(--gold), var(--gold-light)) !important;
+        color: white !important;
+        padding: 1rem 1.2rem !important;
+        font-weight: 600 !important;
+        font-size: 0.95rem !important;
+      }
+
+      /* Messages container - SCROLLABLE with better proportions */
+      .chat-messages-container,
+      .messages-container,
+      [class*="messages"] {
+        max-height: 450px !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        padding: 1rem !important;
+        background: #fafafa !important;
+        scroll-behavior: smooth !important;
+      }
+
+      /* Custom scrollbar - more subtle */
+      .chat-messages-container::-webkit-scrollbar,
+      .messages-container::-webkit-scrollbar {
+        width: 6px !important;
+      }
+
+      .chat-messages-container::-webkit-scrollbar-track,
+      .messages-container::-webkit-scrollbar-track {
+        background: transparent !important;
+      }
+
+      .chat-messages-container::-webkit-scrollbar-thumb,
+      .messages-container::-webkit-scrollbar-thumb {
+        background: rgba(212, 175, 55, 0.3) !important;
+        border-radius: 10px !important;
+      }
+
+      .chat-messages-container::-webkit-scrollbar-thumb:hover,
+      .messages-container::-webkit-scrollbar-thumb:hover {
+        background: rgba(212, 175, 55, 0.5) !important;
+      }
+
+      /* User messages - refined sizing */
+      .user-message,
+      [class*="user-message"] {
+        background: linear-gradient(135deg, var(--gold), var(--gold-light)) !important;
+        color: white !important;
+        border-radius: 16px 16px 4px 16px !important;
+        padding: 0.65rem 1rem !important;
+        margin: 0.4rem 0 !important;
+        max-width: 75% !important;
+        margin-left: auto !important;
+        box-shadow: 0 2px 6px rgba(212, 175, 55, 0.2) !important;
+        font-size: 0.9rem !important;
+        line-height: 1.5 !important;
+      }
+
+      /* Bot messages - better readability */
+      .bot-message,
+      [class*="bot-message"],
+      [class*="assistant-message"] {
+        background: white !important;
+        color: var(--charcoal) !important;
+        border-radius: 16px 16px 16px 4px !important;
+        padding: 0.65rem 1rem !important;
+        margin: 0.4rem 0 !important;
+        max-width: 75% !important;
+        border: 1px solid #e8e8e8 !important;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06) !important;
+        font-size: 0.9rem !important;
+        line-height: 1.5 !important;
+      }
+
+      /* Input area - cleaner */
+      .chat-input-container,
+      [class*="input"] {
+        padding: 0.85rem !important;
+        background: white !important;
+        border-top: 1px solid #e8e8e8 !important;
+      }
+
+      .chat-input,
+      input[type="text"] {
+        border: 1.5px solid #e0e0e0 !important;
+        border-radius: 20px !important;
+        padding: 0.65rem 1rem !important;
+        font-family: "Inter", sans-serif !important;
+        font-size: 0.9rem !important;
+        transition: all 0.3s ease !important;
+      }
+
+      .chat-input:focus,
+      input[type="text"]:focus {
+        outline: none !important;
+        border-color: var(--gold) !important;
+        box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.08) !important;
+      }
+
+      /* Send button - proportional */
+      .send-button
+       {
+        background: linear-gradient(135deg, var(--gold), var(--gold-light)) !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 50% !important;
+        width: 36px !important;
+        height: 36px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        transition: all 0.3s ease !important;
+        min-width: 36px !important;
+      }
+
+      .send-button:hover,
+      button[type="submit"]:hover {
+        transform: scale(1.05) !important;
+        box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3) !important;
       }
 
       @media (max-width: 992px) {
@@ -210,6 +355,22 @@
 
         .nav-links.show {
           display: flex;
+        }
+
+        /* Mobile chat adjustments */
+        #n8n-chat {
+          bottom: 10px !important;
+          right: 10px !important;
+        }
+
+        .chat-window {
+          width: calc(100vw - 20px) !important;
+          max-width: 400px !important;
+        }
+
+        .chat-messages-container,
+        .messages-container {
+          max-height: 400px !important;
         }
       }
     </style>
@@ -298,11 +459,21 @@
     </script>
 
     <script type="module">
-	import { createChat } from 'https://cdn.jsdelivr.net/npm/@n8n/chat/dist/chat.bundle.es.js';
+      import { createChat } from 'https://cdn.jsdelivr.net/npm/@n8n/chat/dist/chat.bundle.es.js';
 
-	createChat({
-		webhookUrl: 'http://localhost:5678/webhook/b230028b-3807-4147-8932-307f887e8808/chat'
-	});
-</script>
+      createChat({
+        webhookUrl: 'http://localhost:5678/webhook/b230028b-3807-4147-8932-307f887e8808/chat',
+        // Clean, proportional configuration
+        initialMessages: [
+          'Hello! How can I assist you with Digital Larry Adda today?'
+        ],
+        chatWindowHeight: 580,
+        chatWindowWidth: 380,
+        showWelcomeScreen: true,
+        theme: {
+          primaryColor: '#d4af37'
+        }
+      });
+    </script>
   </body>
 </html>
